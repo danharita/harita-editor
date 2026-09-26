@@ -43,12 +43,13 @@
   // Symbol id -> exact option name in "סמלים לבחירה".
   const SYMBOL_OPTION = { heart: 'לב', crown: 'כתר' };
 
-  // One entry per engraving surface, keyed by the gallery image name
-  // engrave-bg-<key>. `extends` copies another entry and overrides fields.
-  const SURFACE_DEFS = {
-    'butcher-shita-38x30': {
+  // A library of engraving surfaces, one entry per kind. `area` (position of
+  // the engraving zone within the photo, in %) is optional — without it the
+  // box is centred and auto-fitted to the image at the surface's mm ratio,
+  // and can be hand-tuned per photo later.
+  const SURFACES_LIB = {
+    board: {
       slot: 'board', label: 'קרש', fileLabel: 'board',
-      area: { xPct: 50 / 380 * 100, yPct: 50 / 300 * 100, wPct: 280 / 380 * 100, hPct: 200 / 300 * 100, shape: 'rect' },
       areaMm: { w: 280, h: 200 },
       engrave: { color: '#3a2211', opacity: 0.82, blend: 'multiply' },
       minLetterMm: 3, defaultTextMm: 16,
@@ -56,9 +57,8 @@
       textFields: ['טקסט לחריטה קרש, שורה 1', 'טקסט לחריטה קרש, שורה 2', 'טקסט לחריטה קרש, שורה 3', 'טקסט לחריטה קרש'],
       danWrap: 'danWrap_2', placeholder: 'board',
     },
-    'santoku-18': {
+    knife: {
       slot: 'knife', label: 'סכין', fileLabel: 'knife',
-      area: { xPct: 34 / 190 * 100, yPct: 28 / 80 * 100, wPct: 110 / 190 * 100, hPct: 24 / 80 * 100, shape: 'rect' },
       areaMm: { w: 110, h: 24 },
       engrave: { color: '#161616', opacity: 0.8, blend: 'multiply' },
       minLetterMm: 2, defaultTextMm: 8,
@@ -66,13 +66,15 @@
       textFields: ['טקסט לחריטה סכין, שורה 1', 'טקסט לחריטה סכין, שורה 2', 'טקסט לחריטה סכין, שורה 3', 'טקסט לחריטה סכין'],
       danWrap: 'danWrap_1', placeholder: 'knife',
     },
-    // test image on product 2851248: the board settings on an 80% centred area
-    'test': {
-      extends: 'butcher-shita-38x30',
-      area: { xPct: 10, yPct: 10, wPct: 80, hPct: 80, shape: 'rect' },
-      engrave: { color: '#141414', opacity: 0.85, blend: 'multiply' },
-    },
   };
+
+  // Products, by the base name of their engrave-bg images. An image named
+  // engrave-bg-<base>-<n> is surface n (1-based) of that base's list, so the
+  // number sets the order and the photos are uploaded in that order.
+  const PRODUCTS = {
+    'test': ['board', 'knife'],   // pilot product 2851248: 1 = board, 2 = knife
+  };
+
   const DESIGN_FIELD_NAMES = ['קישור לעיצוב'];
   const FONT_ROW = 'סוג כתב';
   const SYMBOL_ROW = 'סמלים לבחירה';
@@ -88,12 +90,20 @@
   const escHtml = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const cssEsc = s => (window.CSS && CSS.escape) ? CSS.escape(s) : String(s).replace(/["\\]/g, '\\$&');
 
-  function resolveDef(key) {
-    const d = SURFACE_DEFS[key];
-    if (!d) return null;
-    if (!d.extends) return Object.assign({}, d);
-    return Object.assign({}, resolveDef(d.extends), d, { extends: undefined });
+  // "test-1" -> { base:'test', index:1 }. No trailing number means index 1.
+  function parseKey(key) {
+    const m = /^(.*?)-(\d+)$/.exec(key);
+    return m ? { base: m[1], index: parseInt(m[2], 10) } : { base: key, index: 1 };
   }
+
+  // A centred box at the surface's mm ratio, ~80% of the image.
+  function autoArea(imgW, imgH, areaMm) {
+    const rMm = areaMm.w / areaMm.h, rImg = imgW / imgH;
+    let wPct = 80, hPct = 80;
+    if (rImg > rMm) wPct = hPct * (rMm / rImg); else hPct = wPct * (rImg / rMm);
+    return { xPct: (100 - wPct) / 2, yPct: (100 - hPct) / 2, wPct, hPct, shape: 'rect' };
+  }
+
 
   // ----------------------------------------------------------------- loading
 
@@ -236,16 +246,18 @@
       },
 
       // Hides the fields the editor replaces. The font and symbol rows are
-      // hidden only when the editor covers every engraving surface on the page.
+      // hidden only when the editor covers every engraving text field on the page.
       enter(surfaces) {
+        const mine = new Set();
         for (const s of surfaces) {
-          for (const n of s.textFields) hide(rowOf(textInput(n)));
+          for (const n of s.textFields) { hide(rowOf(textInput(n))); mine.add(n); }
           if (s.danWrap) hide(document.getElementById(s.danWrap));
         }
-        const handled = new Set(surfaces.map(s => s.slot));
-        const uncovered = Object.keys(SURFACE_DEFS).map(resolveDef)
-          .filter(d => !d.extends && !handled.has(d.slot) && d.textFields.some(n => textInput(n)));
-        if (!uncovered.length) { hide(fontRow); hide(symRow); }
+        const stray = [...form.querySelectorAll('input.clsTextChooseProduct')].some(i => {
+          const n = i.getAttribute('property_name') || '';
+          return n.indexOf('טקסט לחריטה') === 0 && !mine.has(n) && rowOf(i) && rowOf(i).style.display !== 'none';
+        });
+        if (!stray) { hide(fontRow); hide(symRow); }
       },
       exit() {
         while (hidden.length) { const h = hidden.pop(); h.el.style.display = h.display; }
@@ -1428,37 +1440,48 @@
   let session = null;   // { root, editor, bar, bridge }
 
   async function resolveSurfaces(ctx, bridge) {
+    // Group the images by base name and pick the product on the page (the
+    // base with the most images — normally the only one). Within it, order
+    // by the trailing number, so engrave-bg-<base>-1 is the first surface.
+    const parsed = (ctx.bgs || []).map(b => Object.assign(parseKey(b.key), { url: b.url, key: b.key }));
+    const byBase = {};
+    for (const p of parsed) (byBase[p.base] = byBase[p.base] || []).push(p);
+    const base = Object.keys(byBase).sort((a, b) => byBase[b].length - byBase[a].length)[0];
+    const imgs = base ? byBase[base].sort((a, b) => a.index - b.index) : [];
+    let libKeys = PRODUCTS[base] || (SURFACES_LIB[base] ? [base] : null);
+    if (!libKeys) { console.warn('[DHEditor] no product config for "' + base + '", assuming board+knife'); libKeys = ['board', 'knife']; }
+
     const out = [];
-    const slots = new Set();
-    for (const bg of ctx.bgs || []) {
-      const d = resolveDef(bg.key);
-      if (!d) { console.warn('[DHEditor] no settings for engrave-bg-' + bg.key); continue; }
-      if (slots.has(d.slot)) continue;
-      const im = await loadImage(bg.url);
-      const ratioImg = (d.area.wPct * im.naturalWidth) / (d.area.hPct * im.naturalHeight);
-      const ratioMm = d.areaMm.w / d.areaMm.h;
-      if (Math.abs(ratioImg / ratioMm - 1) > 0.02) console.warn(`[DHEditor] engrave-bg-${bg.key}: area ratio ${ratioImg.toFixed(3)} vs ${ratioMm.toFixed(3)} mm`);
-      out.push(Object.assign(d, { key: bg.key, img: { el: im, url: bg.url, w: im.naturalWidth, h: im.naturalHeight } }));
-      slots.add(d.slot);
+    const usedSlots = new Set();
+    const finish = (lib, imgObj, ord) => {
+      const d = Object.assign({}, lib, { key: lib.slot, order: ord, img: imgObj });
+      d.area = d.area || autoArea(imgObj.w, imgObj.h, d.areaMm);
+      const rImg = (d.area.wPct * imgObj.w) / (d.area.hPct * imgObj.h), rMm = d.areaMm.w / d.areaMm.h;
+      if (Math.abs(rImg / rMm - 1) > 0.02) console.warn(`[DHEditor] ${lib.slot}: area ratio ${rImg.toFixed(3)} vs ${rMm.toFixed(3)} mm — the box may not sit on the engraving zone`);
+      out.push(d);
+      usedSlots.add(lib.slot);
+    };
+    for (let i = 0; i < imgs.length; i++) {
+      const lib = SURFACES_LIB[libKeys[i] || libKeys[libKeys.length - 1]];
+      if (!lib || usedSlots.has(lib.slot)) continue;
+      const im = await loadImage(imgs[i].url);
+      finish(lib, { el: im, url: imgs[i].url, w: im.naturalWidth, h: im.naturalHeight }, i);
     }
-    // test mode: surfaces whose fields are on the page but have no image yet
-    // get a drawn stand-in
+    // test mode: a surface from the product's list with no image yet gets a
+    // drawn stand-in, so both tabs show even from a single placeholder image
     if (ctx.test) {
-      for (const key of Object.keys(SURFACE_DEFS)) {
-        const d = resolveDef(key);
-        if (d.extends || slots.has(d.slot) || !d.placeholder || !d.textFields.some(bridge.hasField)) continue;
-        const c = d.placeholder === 'knife' ? drawKnife() : drawBoard();
-        out.push(Object.assign(d, { key, img: { el: c, url: c.toDataURL('image/jpeg', 0.9), w: c.width, h: c.height } }));
-        slots.add(d.slot);
-      }
+      libKeys.forEach((key, i) => {
+        const lib = SURFACES_LIB[key];
+        if (!lib || usedSlots.has(lib.slot) || !lib.placeholder || !lib.textFields.some(bridge.hasField)) return;
+        const c = lib.placeholder === 'knife' ? drawKnife() : drawBoard();
+        finish(lib, { el: c, url: c.toDataURL('image/jpeg', 0.9), w: c.width, h: c.height }, i);
+      });
     }
     for (const s of out) {
       s.textFields = bridge.fieldsPresent(s.textFields);
       s.requiresText = s.textFields.some(bridge.isRequired);
     }
-    const order = Object.keys(SURFACE_DEFS);
-    const rank = s => ['board', 'knife'].indexOf(s.slot) >= 0 ? ['board', 'knife'].indexOf(s.slot) : order.length;
-    return out.sort((a, b) => rank(a) - rank(b));
+    return out.sort((a, b) => a.order - b.order);
   }
 
   function injectCss() {

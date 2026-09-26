@@ -21,7 +21,7 @@ with sync_playwright() as p:
     cdp = ctx.new_cdp_session(page)
     def pos(kind):
         return page.evaluate("""(kind) => { const d = __dhe(), c = d.canvas, v = c.viewportTransform, r = c.upperCanvasEl.getBoundingClientRect();
-          const o = d.state.surfaces.test.objects.find(o => o.type === kind); const fo = d.foMap.get(o.id);
+          const o = d.state.surfaces.board.objects.find(o => o.type === kind); const fo = d.foMap.get(o.id);
           return { x: r.left + v[4] + fo.left * v[0], y: r.top + v[5] + fo.top * v[3], cx: o.cx, cy: o.cy, w: o.widthMm }; }""", kind)
     s = pos('symbol')
     cdp.send('Input.dispatchTouchEvent', {'type':'touchStart','touchPoints':[{'x':s['x'],'y':s['y']}]})

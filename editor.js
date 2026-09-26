@@ -1,4 +1,4 @@
-/* Dan Harita design editor 202609261603 */
+/* Dan Harita design editor 202609261620 */
 /*
  * EngraveEngine — turns text and symbols into engraving outlines (mm),
  * and writes DXF (R12) and SVG. The same outlines drive the on-screen
@@ -604,7 +604,7 @@
   const EE = window.EngraveEngine;
   const SYMBOLS = window.DEMO_SYMBOLS;
   const CSS_TEXT = '.dhe { --ground: #f6f4f0; --surface: #ffffff; --surface-2: #f7f5f1; --ink: #1d1a16; --muted: #6b645a; --line: #e0dbd2; --accent: #8f6f33; --accent-ink: #ffffff; --accent-soft: #f2eadb; --brand: #c8a96e; --danger: #b3261e; --danger-soft: #fbeae8; --stage: #e7e3dc; --focus: #2f6fd6; --ok: #1e7b3a; direction: rtl; text-align: right; color: var(--ink); font-family: inherit; font-size: 16px; line-height: 1.4; display: grid; gap: 12px; margin: 12px 0 20px; padding: 12px; background: var(--ground); border: 1px solid var(--line); border-radius: 14px; box-sizing: border-box; width: 100%; max-width: 760px; } .dhe *, .dhe *::before, .dhe *::after { box-sizing: border-box; } .dhe [hidden] { display: none !important; } .dhe button, .dhe textarea, .dhe input, .dhe output { font-family: inherit; color: inherit; margin: 0; text-transform: none; letter-spacing: normal; box-shadow: none; background-image: none; float: none; text-shadow: none; } .dhe button { cursor: pointer; line-height: 1.2; -webkit-tap-highlight-color: transparent; } .dhe :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; } .dhe p { margin: 0; } .dhe h2 { margin: 0; font-size: 13px; font-weight: 700; letter-spacing: .02em; color: var(--muted); line-height: 1.3; } .dhe .dhe-btn { min-height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); font-weight: 600; font-size: 16px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: auto; height: auto; } .dhe .dhe-btn:hover { border-color: var(--accent); } .dhe .dhe-btn:disabled { opacity: .45; cursor: default; border-color: var(--line); } .dhe .dhe-btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); } .dhe .dhe-btn.primary:hover { filter: brightness(1.06); } .dhe .dhe-btn.danger { color: var(--danger); } .dhe .dhe-btn.icon { width: 44px; padding: 0; } .dhe .dhe-btn svg { width: 20px; height: 20px; } .dhe .dhe-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; } .dhe .dhe-bar .grow { flex: 1; min-width: 0; } .dhe .dhe-status { font-size: 14px; color: var(--muted); font-weight: 600; margin-top: -4px; } .dhe .dhe-status.ok { color: var(--ok); } .dhe .dhe-status.dirty { color: var(--accent); } .dhe .dhe-test { font-size: 12px; font-weight: 700; color: var(--accent); background: var(--accent-soft); border-radius: 999px; padding: 2px 9px; } .dhe .dhe-tabs { display: inline-flex; background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 3px; gap: 3px; justify-self: start; } .dhe .dhe-tabs button { min-height: 38px; padding: 0 16px; border: 0; border-radius: 9px; background: transparent; font-weight: 600; font-size: 15px; color: var(--muted); } .dhe .dhe-tabs button[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.12); } .dhe .dhe-tabs .count { font-weight: 400; color: var(--muted); } .dhe .dhe-stage-wrap { display: grid; gap: 6px; justify-items: center; } .dhe .dhe-stage { position: relative; width: 100%; background: var(--stage); border-radius: 12px; overflow: hidden; } .dhe .dhe-stage img.dhe-bg { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; display: block; margin: 0; user-select: none; -webkit-user-drag: none; pointer-events: none; border: 0; } .dhe .dhe-stage .canvas-container { position: absolute !important; inset: 0; } .dhe .dhe-stage canvas { max-width: none !important; max-height: none !important; } .dhe .dhe-loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font-weight: 600; background: var(--stage); text-align: center; padding: 16px; z-index: 2; } .dhe .dhe-readout { width: 100%; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 13px; color: var(--muted); } .dhe .dhe-readout strong { color: var(--ink); font-weight: 600; } .dhe .dhe-quick { width: 100%; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; } .dhe .dhe-quick-label { font-size: 13px; font-weight: 600; color: var(--muted); } .dhe .dhe-fine { color: var(--muted); font-size: 13px; } .dhe .dhe-toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; } .dhe .dhe-toolbar .grow { flex: 1; } .dhe .dhe-panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: grid; gap: 12px; } .dhe .dhe-hint { color: var(--muted); font-size: 15px; } .dhe .dhe-edit { position: absolute; top: 6px; left: 6px; right: 6px; z-index: 6; display: flex; gap: 6px; align-items: flex-start; } .dhe .dhe-edit textarea { flex: 1; min-width: 0; min-height: 46px; box-sizing: border-box; border: 2px solid var(--accent); border-radius: 10px; background: rgba(255, 255, 255, 0.95); color: #1d1a16; padding: 9px 12px; font-size: 18px; line-height: 1.35; resize: none; overflow: auto; unicode-bidi: plaintext; text-align: center; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22); } .dhe .dhe-edit textarea:focus { outline: none; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22), 0 0 0 3px var(--accent-soft); } .dhe .dhe-edit textarea::placeholder { color: #8d857a; } .dhe .dhe-edit button { width: 46px; min-height: 46px; border: 0; border-radius: 10px; background: var(--accent); color: var(--accent-ink); font-size: 20px; font-weight: 700; padding: 0; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22); } .dhe .dhe-fonts { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; -webkit-overflow-scrolling: touch; } .dhe .dhe-chip { flex: 0 0 auto; min-width: 104px; max-width: 170px; min-height: 64px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); padding: 6px 10px; display: grid; gap: 2px; text-align: center; } .dhe .dhe-chip .sample { font-size: 22px; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; unicode-bidi: plaintext; } .dhe .dhe-chip .name { font-size: 12px; color: var(--muted); } .dhe .dhe-chip[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); box-shadow: inset 0 0 0 1px var(--accent); } .dhe .dhe-chip.warn .name { color: var(--danger); } .dhe .dhe-chip.loading { opacity: .55; } .dhe .dhe-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; } .dhe .dhe-stepper { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--surface); } .dhe .dhe-stepper button { width: 44px; min-height: 42px; border: 0; background: var(--surface-2); font-size: 20px; font-weight: 700; padding: 0; touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; } .dhe .dhe-stepper button:active { background: var(--accent-soft); } .dhe .dhe-stepper output { min-width: 128px; text-align: center; font-size: 14px; padding: 0 6px; } .dhe .dhe-seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; } .dhe .dhe-seg button { min-height: 42px; padding: 0 12px; border: 0; background: var(--surface-2); font-weight: 600; font-size: 14px; } .dhe .dhe-seg button + button { border-inline-start: 1px solid var(--line); } .dhe .dhe-seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); } .dhe .dhe-symbols { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; } .dhe .dhe-sym { border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); padding: 10px 6px 6px; display: grid; gap: 4px; justify-items: center; font-size: 13px; color: var(--muted); } .dhe .dhe-sym svg { width: 44px; height: 38px; color: var(--ink); } .dhe .dhe-sym:hover { border-color: var(--accent); } .dhe .dhe-nudge { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; } .dhe .dhe-nudge-label { font-size: 13px; font-weight: 600; color: var(--muted); margin-inline-end: 4px; } .dhe .dhe-nudge button { width: 44px; height: 44px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); display: inline-grid; place-items: center; padding: 0; touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; } .dhe .dhe-nudge button.wide { width: auto; padding: 0 14px; font-weight: 600; font-size: 14px; } .dhe .dhe-nudge button svg { width: 20px; height: 20px; } .dhe .dhe-nudge button:active { background: var(--accent-soft); border-color: var(--accent); } .dhe .dhe-issues { padding: 10px 14px; background: var(--danger-soft); color: var(--danger); border-radius: 10px; display: grid; gap: 4px; font-size: 14px; font-weight: 600; } .dhe details.dhe-settings { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 0 14px; } .dhe details.dhe-settings summary { min-height: 44px; display: flex; align-items: center; font-weight: 600; cursor: pointer; font-size: 15px; } .dhe details.dhe-settings .body { display: grid; gap: 10px; padding-bottom: 14px; font-size: 15px; } .dhe details.dhe-settings label { display: flex; gap: 8px; align-items: center; font-weight: 400; margin: 0; } .dhe details.dhe-settings input { width: 18px; height: 18px; accent-color: var(--accent); } .dhe .dhe-toast { position: fixed; left: 16px; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); margin: 0 auto; max-width: 520px; background: var(--ink); color: #fff; border-radius: 12px; padding: 12px 16px; font-weight: 600; font-size: 15px; box-shadow: 0 6px 24px rgba(0,0,0,.25); transition: opacity .2s, transform .2s; z-index: 2147483000; opacity: 0; transform: translateY(8px); pointer-events: none; text-align: center; } .dhe .dhe-toast.show { opacity: 1; transform: none; } @media (prefers-reduced-motion: reduce) { .dhe .dhe-toast { transition: none; } } @media (max-width: 420px) { .dhe { padding: 10px; } .dhe .dhe-stepper output { min-width: 108px; } .dhe .dhe-bar .dhe-btn { padding: 0 12px; } } ';
-  const VERSION = '202609261603';
+  const VERSION = '202609261620';
 
   // ------------------------------------------------------------------ config
 
@@ -637,12 +637,13 @@
   // Symbol id -> exact option name in "סמלים לבחירה".
   const SYMBOL_OPTION = { heart: 'לב', crown: 'כתר' };
 
-  // One entry per engraving surface, keyed by the gallery image name
-  // engrave-bg-<key>. `extends` copies another entry and overrides fields.
-  const SURFACE_DEFS = {
-    'butcher-shita-38x30': {
+  // A library of engraving surfaces, one entry per kind. `area` (position of
+  // the engraving zone within the photo, in %) is optional — without it the
+  // box is centred and auto-fitted to the image at the surface's mm ratio,
+  // and can be hand-tuned per photo later.
+  const SURFACES_LIB = {
+    board: {
       slot: 'board', label: 'קרש', fileLabel: 'board',
-      area: { xPct: 50 / 380 * 100, yPct: 50 / 300 * 100, wPct: 280 / 380 * 100, hPct: 200 / 300 * 100, shape: 'rect' },
       areaMm: { w: 280, h: 200 },
       engrave: { color: '#3a2211', opacity: 0.82, blend: 'multiply' },
       minLetterMm: 3, defaultTextMm: 16,
@@ -650,9 +651,8 @@
       textFields: ['טקסט לחריטה קרש, שורה 1', 'טקסט לחריטה קרש, שורה 2', 'טקסט לחריטה קרש, שורה 3', 'טקסט לחריטה קרש'],
       danWrap: 'danWrap_2', placeholder: 'board',
     },
-    'santoku-18': {
+    knife: {
       slot: 'knife', label: 'סכין', fileLabel: 'knife',
-      area: { xPct: 34 / 190 * 100, yPct: 28 / 80 * 100, wPct: 110 / 190 * 100, hPct: 24 / 80 * 100, shape: 'rect' },
       areaMm: { w: 110, h: 24 },
       engrave: { color: '#161616', opacity: 0.8, blend: 'multiply' },
       minLetterMm: 2, defaultTextMm: 8,
@@ -660,13 +660,15 @@
       textFields: ['טקסט לחריטה סכין, שורה 1', 'טקסט לחריטה סכין, שורה 2', 'טקסט לחריטה סכין, שורה 3', 'טקסט לחריטה סכין'],
       danWrap: 'danWrap_1', placeholder: 'knife',
     },
-    // test image on product 2851248: the board settings on an 80% centred area
-    'test': {
-      extends: 'butcher-shita-38x30',
-      area: { xPct: 10, yPct: 10, wPct: 80, hPct: 80, shape: 'rect' },
-      engrave: { color: '#141414', opacity: 0.85, blend: 'multiply' },
-    },
   };
+
+  // Products, by the base name of their engrave-bg images. An image named
+  // engrave-bg-<base>-<n> is surface n (1-based) of that base's list, so the
+  // number sets the order and the photos are uploaded in that order.
+  const PRODUCTS = {
+    'test': ['board', 'knife'],   // pilot product 2851248: 1 = board, 2 = knife
+  };
+
   const DESIGN_FIELD_NAMES = ['קישור לעיצוב'];
   const FONT_ROW = 'סוג כתב';
   const SYMBOL_ROW = 'סמלים לבחירה';
@@ -682,12 +684,20 @@
   const escHtml = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const cssEsc = s => (window.CSS && CSS.escape) ? CSS.escape(s) : String(s).replace(/["\\]/g, '\\$&');
 
-  function resolveDef(key) {
-    const d = SURFACE_DEFS[key];
-    if (!d) return null;
-    if (!d.extends) return Object.assign({}, d);
-    return Object.assign({}, resolveDef(d.extends), d, { extends: undefined });
+  // "test-1" -> { base:'test', index:1 }. No trailing number means index 1.
+  function parseKey(key) {
+    const m = /^(.*?)-(\d+)$/.exec(key);
+    return m ? { base: m[1], index: parseInt(m[2], 10) } : { base: key, index: 1 };
   }
+
+  // A centred box at the surface's mm ratio, ~80% of the image.
+  function autoArea(imgW, imgH, areaMm) {
+    const rMm = areaMm.w / areaMm.h, rImg = imgW / imgH;
+    let wPct = 80, hPct = 80;
+    if (rImg > rMm) wPct = hPct * (rMm / rImg); else hPct = wPct * (rImg / rMm);
+    return { xPct: (100 - wPct) / 2, yPct: (100 - hPct) / 2, wPct, hPct, shape: 'rect' };
+  }
+
 
   // ----------------------------------------------------------------- loading
 
@@ -830,16 +840,18 @@
       },
 
       // Hides the fields the editor replaces. The font and symbol rows are
-      // hidden only when the editor covers every engraving surface on the page.
+      // hidden only when the editor covers every engraving text field on the page.
       enter(surfaces) {
+        const mine = new Set();
         for (const s of surfaces) {
-          for (const n of s.textFields) hide(rowOf(textInput(n)));
+          for (const n of s.textFields) { hide(rowOf(textInput(n))); mine.add(n); }
           if (s.danWrap) hide(document.getElementById(s.danWrap));
         }
-        const handled = new Set(surfaces.map(s => s.slot));
-        const uncovered = Object.keys(SURFACE_DEFS).map(resolveDef)
-          .filter(d => !d.extends && !handled.has(d.slot) && d.textFields.some(n => textInput(n)));
-        if (!uncovered.length) { hide(fontRow); hide(symRow); }
+        const stray = [...form.querySelectorAll('input.clsTextChooseProduct')].some(i => {
+          const n = i.getAttribute('property_name') || '';
+          return n.indexOf('טקסט לחריטה') === 0 && !mine.has(n) && rowOf(i) && rowOf(i).style.display !== 'none';
+        });
+        if (!stray) { hide(fontRow); hide(symRow); }
       },
       exit() {
         while (hidden.length) { const h = hidden.pop(); h.el.style.display = h.display; }
@@ -2022,37 +2034,48 @@
   let session = null;   // { root, editor, bar, bridge }
 
   async function resolveSurfaces(ctx, bridge) {
+    // Group the images by base name and pick the product on the page (the
+    // base with the most images — normally the only one). Within it, order
+    // by the trailing number, so engrave-bg-<base>-1 is the first surface.
+    const parsed = (ctx.bgs || []).map(b => Object.assign(parseKey(b.key), { url: b.url, key: b.key }));
+    const byBase = {};
+    for (const p of parsed) (byBase[p.base] = byBase[p.base] || []).push(p);
+    const base = Object.keys(byBase).sort((a, b) => byBase[b].length - byBase[a].length)[0];
+    const imgs = base ? byBase[base].sort((a, b) => a.index - b.index) : [];
+    let libKeys = PRODUCTS[base] || (SURFACES_LIB[base] ? [base] : null);
+    if (!libKeys) { console.warn('[DHEditor] no product config for "' + base + '", assuming board+knife'); libKeys = ['board', 'knife']; }
+
     const out = [];
-    const slots = new Set();
-    for (const bg of ctx.bgs || []) {
-      const d = resolveDef(bg.key);
-      if (!d) { console.warn('[DHEditor] no settings for engrave-bg-' + bg.key); continue; }
-      if (slots.has(d.slot)) continue;
-      const im = await loadImage(bg.url);
-      const ratioImg = (d.area.wPct * im.naturalWidth) / (d.area.hPct * im.naturalHeight);
-      const ratioMm = d.areaMm.w / d.areaMm.h;
-      if (Math.abs(ratioImg / ratioMm - 1) > 0.02) console.warn(`[DHEditor] engrave-bg-${bg.key}: area ratio ${ratioImg.toFixed(3)} vs ${ratioMm.toFixed(3)} mm`);
-      out.push(Object.assign(d, { key: bg.key, img: { el: im, url: bg.url, w: im.naturalWidth, h: im.naturalHeight } }));
-      slots.add(d.slot);
+    const usedSlots = new Set();
+    const finish = (lib, imgObj, ord) => {
+      const d = Object.assign({}, lib, { key: lib.slot, order: ord, img: imgObj });
+      d.area = d.area || autoArea(imgObj.w, imgObj.h, d.areaMm);
+      const rImg = (d.area.wPct * imgObj.w) / (d.area.hPct * imgObj.h), rMm = d.areaMm.w / d.areaMm.h;
+      if (Math.abs(rImg / rMm - 1) > 0.02) console.warn(`[DHEditor] ${lib.slot}: area ratio ${rImg.toFixed(3)} vs ${rMm.toFixed(3)} mm — the box may not sit on the engraving zone`);
+      out.push(d);
+      usedSlots.add(lib.slot);
+    };
+    for (let i = 0; i < imgs.length; i++) {
+      const lib = SURFACES_LIB[libKeys[i] || libKeys[libKeys.length - 1]];
+      if (!lib || usedSlots.has(lib.slot)) continue;
+      const im = await loadImage(imgs[i].url);
+      finish(lib, { el: im, url: imgs[i].url, w: im.naturalWidth, h: im.naturalHeight }, i);
     }
-    // test mode: surfaces whose fields are on the page but have no image yet
-    // get a drawn stand-in
+    // test mode: a surface from the product's list with no image yet gets a
+    // drawn stand-in, so both tabs show even from a single placeholder image
     if (ctx.test) {
-      for (const key of Object.keys(SURFACE_DEFS)) {
-        const d = resolveDef(key);
-        if (d.extends || slots.has(d.slot) || !d.placeholder || !d.textFields.some(bridge.hasField)) continue;
-        const c = d.placeholder === 'knife' ? drawKnife() : drawBoard();
-        out.push(Object.assign(d, { key, img: { el: c, url: c.toDataURL('image/jpeg', 0.9), w: c.width, h: c.height } }));
-        slots.add(d.slot);
-      }
+      libKeys.forEach((key, i) => {
+        const lib = SURFACES_LIB[key];
+        if (!lib || usedSlots.has(lib.slot) || !lib.placeholder || !lib.textFields.some(bridge.hasField)) return;
+        const c = lib.placeholder === 'knife' ? drawKnife() : drawBoard();
+        finish(lib, { el: c, url: c.toDataURL('image/jpeg', 0.9), w: c.width, h: c.height }, i);
+      });
     }
     for (const s of out) {
       s.textFields = bridge.fieldsPresent(s.textFields);
       s.requiresText = s.textFields.some(bridge.isRequired);
     }
-    const order = Object.keys(SURFACE_DEFS);
-    const rank = s => ['board', 'knife'].indexOf(s.slot) >= 0 ? ['board', 'knife'].indexOf(s.slot) : order.length;
-    return out.sort((a, b) => rank(a) - rank(b));
+    return out.sort((a, b) => a.order - b.order);
   }
 
   function injectCss() {

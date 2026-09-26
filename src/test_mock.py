@@ -79,9 +79,12 @@ with sync_playwright() as p:
     check(not vis(page, '#danWrap_1') and not vis(page, 'ul.clsUlChooseProduct'), 'editor: default view hidden')
     tabs = page.eval_on_selector_all('.dhe-tabs button', 'bs => bs.map(b => b.textContent.trim())')
     check(len(tabs) == 2 and tabs[0].startswith('קרש') and tabs[1].startswith('סכין'), f'tabs {tabs}')
+    surf = page.evaluate("__dhe().SURFACES.map(s => ({slot: s.slot, img: s.img.w + 'x' + s.img.h}))")
+    check([s['slot'] for s in surf] == ['board', 'knife'], f'surface order from -1/-2: {surf}')
+    check(surf[0]['img'] == '800x571' and surf[1]['img'] == '1140x480', f'both from real images (no placeholder): {surf}')
     st = page.evaluate("JSON.parse(JSON.stringify(__dhe().state))")
-    knife = st['surfaces']['santoku-18']['objects']
-    board = st['surfaces']['test']['objects']
+    knife = st['surfaces']['knife']['objects']
+    board = st['surfaces']['board']['objects']
     check(knife[0]['text'] == 'השף של הבית' and knife[0]['font'] == 'ktavyad', f"knife text imported: {knife[0]['text']!r} {knife[0]['font']}")
     check(any(o['type'] == 'symbol' and o['symbol'] == 'heart' for o in board), 'ticked heart imported onto the board')
 
@@ -97,7 +100,7 @@ with sync_playwright() as p:
     page.keyboard.press('Enter')
     page.keyboard.type('בית חם')
     page.wait_for_timeout(700)
-    check(page.evaluate("__dhe().state.surfaces.test.objects[0].text") == 'משפחת כהן\nבית חם', 'text lands on the board live')
+    check(page.evaluate("__dhe().state.surfaces.board.objects[0].text") == 'משפחת כהן\nבית חם', 'text lands on the board live')
     f = fields(page)
     check(f['טקסט לחריטה קרש, שורה 1'] == 'משפחת כהן' and f['טקסט לחריטה קרש, שורה 2'] == 'בית חם', f"board fields: {f['טקסט לחריטה קרש, שורה 1']!r} / {f['טקסט לחריטה קרש, שורה 2']!r}")
     check(f['טקסט לחריטה סכין, שורה 1'] == 'השף של הבית', 'knife field kept')
@@ -189,7 +192,7 @@ with sync_playwright() as p:
     # open again: the design is still there
     page.click('.dh-start-btn')
     page.wait_for_timeout(600)
-    n = page.evaluate("__dhe().state.surfaces.test.objects.length")
+    n = page.evaluate("__dhe().state.surfaces.board.objects.length")
     check(n == 3, f'design kept on reopening ({n} objects on the board)')
     print('page errors:', errs or 'none')
     print('console:', [l for l in logs if 'favicon' not in l] or 'none')
