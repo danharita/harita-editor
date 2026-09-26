@@ -473,8 +473,11 @@
         }));
         fo.dhIc = { x: lay.ink.cx, y: lay.ink.cy };
       } else {
-        const h = Math.max(4, o.sizeMm || 10), w = h * 3;
-        fo = new fabric.Rect(Object.assign({}, CTRL, { width: w, height: h, fill: 'rgba(200,169,110,0.35)', left: o.cx, top: o.cy }));
+        // an empty text box: a big, tappable hint frame ("tap here to add
+        // text"). The hint itself is drawn in after:render.
+        const A = s.areaMm;
+        const w = Math.min(A.w * 0.66, A.w - 4), h = Math.min(Math.max(o.sizeMm || 10, A.h * 0.2), A.h - 4);
+        fo = new fabric.Rect(Object.assign({}, CTRL, { width: w, height: h, fill: 'rgba(200,169,110,0.12)', left: o.cx, top: o.cy }));
         fo.dhIc = { x: 0, y: 0 };
         fo.dhEmpty = true;
       }
@@ -637,15 +640,17 @@
       // Touch: a finger near an object picks it; with something selected a
       // drag anywhere on the image moves it; a tap (no drag) on a text opens
       // the writing bar; a tap on empty space deselects.
+      // Pointer handling (mouse and touch alike): a press near an object
+      // picks it, and a drag anywhere on the image moves the selection — so
+      // on the computer you can drag from near the piece too, not only on it.
       let drag = null, tapT = null;
-      if (COARSE) canvas._shouldClearSelection = () => false;
+      canvas._shouldClearSelection = () => false;
       canvas.on('mouse:down', opt => {
-        if (!COARSE) return;
         drag = null;
         tapT = null;
         if (opt.target) {
-          // Fabric moves it itself; remember where it started so a tap
-          // (no movement) can open the text for writing
+          // Fabric moves/resizes it itself; remember the start so a tap with
+          // no movement can open the text for writing (touch only)
           tapT = { fo: opt.target, ox: opt.target.left, oy: opt.target.top };
           return;
         }
@@ -678,9 +683,9 @@
         drag = null;
         tapT = null;
         if (d && d.moved) commitMove(d.fo);
-        else if (d && d.picked) tapToEdit(d.fo);
+        else if (d && d.picked && COARSE) tapToEdit(d.fo);   // touch: tap near a text edits it
         else if (d && !d.picked) canvas.discardActiveObject();
-        else if (t && Math.hypot(t.fo.left - t.ox, t.fo.top - t.oy) * k < 3) tapToEdit(t.fo);
+        else if (COARSE && t && Math.hypot(t.fo.left - t.ox, t.fo.top - t.oy) * k < 3) tapToEdit(t.fo);
         if (guides.v || guides.h) guides.v = guides.h = false;
         canvas.requestRenderAll();
       });
@@ -757,6 +762,34 @@
           const w = fo.width * fo.scaleX, h = fo.height * fo.scaleY;
           c.strokeStyle = '#d93025'; c.lineWidth = 2 * px; c.setLineDash([4 * px, 3 * px]);
           c.strokeRect(fo.left - w / 2 - 3 * px, fo.top - h / 2 - 3 * px, w + 6 * px, h + 6 * px);
+        }
+        // dashed frame + hint on each empty text box (in the mm space)
+        const empties = cur().objects.filter(o => o.type === 'text' && !o.text.trim());
+        c.setLineDash([5 * px, 4 * px]); c.lineWidth = 1.6 * px; c.strokeStyle = 'rgba(143,111,51,0.85)';
+        for (const o of empties) {
+          const fo = foMap.get(o.id);
+          if (!fo) continue;
+          const w = fo.width * fo.scaleX, h = fo.height * fo.scaleY, rr = Math.min(3, h / 3, w / 3);
+          c.beginPath();
+          if (c.roundRect) c.roundRect(fo.left - w / 2, fo.top - h / 2, w, h, rr); else c.rect(fo.left - w / 2, fo.top - h / 2, w, h);
+          c.stroke();
+        }
+        c.setLineDash([]);
+        if (empties.length) {
+          const hint = COARSE ? 'לחצו כאן להוספת הטקסט' : 'לחצו כאן פעמיים להוספת הטקסט';
+          c.textAlign = 'center'; c.textBaseline = 'middle'; c.direction = 'rtl';
+          c.fillStyle = 'rgba(93,74,38,0.95)';
+          for (const o of empties) {
+            const fo = foMap.get(o.id);
+            if (!fo) continue;
+            const boxW = fo.width * fo.scaleX;
+            let fontMm = 15 / v[0], guard = 0;   // ~15 screen px, shrunk to fit
+            c.font = `600 ${fontMm}px "Assistant", system-ui, sans-serif`;
+            while (c.measureText(hint).width > boxW * 0.9 && fontMm > 3 / v[0] && guard++ < 40) {
+              fontMm *= 0.92; c.font = `600 ${fontMm}px "Assistant", system-ui, sans-serif`;
+            }
+            c.fillText(hint, fo.left, fo.top);
+          }
         }
         c.restore();
       });
