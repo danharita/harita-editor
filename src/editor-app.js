@@ -70,9 +70,16 @@
 
   // Products, by the base name of their engrave-bg images. An image named
   // engrave-bg-<base>-<n> is surface n (1-based) of that base's list, so the
-  // number sets the order and the photos are uploaded in that order.
+  // number sets the order and the photos are uploaded in that order. Each
+  // entry is a surface-library key, or { lib, area } to pin the engraving
+  // box on that product's specific photo (area in % of the image).
   const PRODUCTS = {
-    'test': ['board', 'knife'],   // pilot product 2851248: 1 = board, 2 = knife
+    // pilot product 2851248, measured on Dan's photos
+    'test': [
+      { lib: 'board', area: { xPct: 16.5, yPct: 15.0, wPct: 66.5, hPct: 71.3, shape: 'rect' } },
+      { lib: 'knife', area: { xPct: 17.9, yPct: 42.0, wPct: 35.5, hPct: 11.6, shape: 'rect' } },
+    ],
+    'mock': ['board', 'knife'],   // local test images: auto-fit the box
   };
 
   const DESIGN_FIELD_NAMES = ['קישור לעיצוב'];
@@ -1483,11 +1490,13 @@
     const imgs = base ? byBase[base].sort((a, b) => a.index - b.index) : [];
     let libKeys = PRODUCTS[base] || (SURFACES_LIB[base] ? [base] : null);
     if (!libKeys) { console.warn('[DHEditor] no product config for "' + base + '", assuming board+knife'); libKeys = ['board', 'knife']; }
+    const entries = libKeys.map(e => (typeof e === 'string' ? { lib: e } : e));
 
     const out = [];
     const usedSlots = new Set();
-    const finish = (lib, imgObj, ord) => {
-      const d = Object.assign({}, lib, { key: lib.slot, order: ord, img: imgObj });
+    const finish = (entry, imgObj, ord) => {
+      const lib = SURFACES_LIB[entry.lib];
+      const d = Object.assign({}, lib, entry.area ? { area: entry.area } : {}, { key: lib.slot, order: ord, img: imgObj });
       d.area = d.area || autoArea(imgObj.w, imgObj.h, d.areaMm);
       const rImg = (d.area.wPct * imgObj.w) / (d.area.hPct * imgObj.h), rMm = d.areaMm.w / d.areaMm.h;
       if (Math.abs(rImg / rMm - 1) > 0.02) console.warn(`[DHEditor] ${lib.slot}: area ratio ${rImg.toFixed(3)} vs ${rMm.toFixed(3)} mm — the box may not sit on the engraving zone`);
@@ -1495,19 +1504,20 @@
       usedSlots.add(lib.slot);
     };
     for (let i = 0; i < imgs.length; i++) {
-      const lib = SURFACES_LIB[libKeys[i] || libKeys[libKeys.length - 1]];
+      const entry = entries[i] || entries[entries.length - 1];
+      const lib = SURFACES_LIB[entry.lib];
       if (!lib || usedSlots.has(lib.slot)) continue;
       const im = await loadImage(imgs[i].url);
-      finish(lib, { el: im, url: imgs[i].url, w: im.naturalWidth, h: im.naturalHeight }, i);
+      finish(entry, { el: im, url: imgs[i].url, w: im.naturalWidth, h: im.naturalHeight }, i);
     }
     // test mode: a surface from the product's list with no image yet gets a
     // drawn stand-in, so both tabs show even from a single placeholder image
     if (ctx.test) {
-      libKeys.forEach((key, i) => {
-        const lib = SURFACES_LIB[key];
+      entries.forEach((entry, i) => {
+        const lib = SURFACES_LIB[entry.lib];
         if (!lib || usedSlots.has(lib.slot) || !lib.placeholder || !lib.textFields.some(bridge.hasField)) return;
         const c = lib.placeholder === 'knife' ? drawKnife() : drawBoard();
-        finish(lib, { el: c, url: c.toDataURL('image/jpeg', 0.9), w: c.width, h: c.height }, i);
+        finish(entry, { el: c, url: c.toDataURL('image/jpeg', 0.9), w: c.width, h: c.height }, i);
       });
     }
     for (const s of out) {
