@@ -15,7 +15,7 @@ with sync_playwright() as p:
     page = ctx.new_page(); errs=[]; page.on('pageerror', lambda e: errs.append(str(e)))
     page.add_init_script('try{localStorage.clear()}catch(e){}')
     page.goto('http://localhost:8765/embed/mock/product.html#dhtest')
-    page.wait_for_selector('.dh-start'); page.click('#CheckBoxCont_60199_225515'); page.click('.dh-start-btn')
+    page.wait_for_selector('.dh-choose'); page.click('.dh-choose-btn[data-dh="us"]'); page.wait_for_timeout(300); page.click('#CheckBoxCont_60199_225515'); page.click('.dh-start-btn')
     page.wait_for_selector('.dhe [data-el="loading"]', state='hidden', timeout=20000); page.wait_for_timeout(500)
     page.evaluate("window.scrollTo(0, document.querySelector('.dhe-stage').getBoundingClientRect().top + scrollY - 200)"); page.wait_for_timeout(300)
     cdp = ctx.new_cdp_session(page)

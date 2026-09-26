@@ -1,4 +1,4 @@
-/* Dan Harita design editor 202609261515 */
+/* Dan Harita design editor 202609261603 */
 /*
  * EngraveEngine — turns text and symbols into engraving outlines (mm),
  * and writes DXF (R12) and SVG. The same outlines drive the on-screen
@@ -603,8 +603,8 @@
 
   const EE = window.EngraveEngine;
   const SYMBOLS = window.DEMO_SYMBOLS;
-  const CSS_TEXT = '.dhe { --ground: #f6f4f0; --surface: #ffffff; --surface-2: #f7f5f1; --ink: #1d1a16; --muted: #6b645a; --line: #e0dbd2; --accent: #8f6f33; --accent-ink: #ffffff; --accent-soft: #f2eadb; --brand: #c8a96e; --danger: #b3261e; --danger-soft: #fbeae8; --stage: #e7e3dc; --focus: #2f6fd6; --ok: #1e7b3a; direction: rtl; text-align: right; color: var(--ink); font-family: inherit; font-size: 16px; line-height: 1.4; display: grid; gap: 12px; margin: 12px 0 20px; padding: 12px; background: var(--ground); border: 1px solid var(--line); border-radius: 14px; box-sizing: border-box; width: 100%; max-width: 760px; } .dhe *, .dhe *::before, .dhe *::after { box-sizing: border-box; } .dhe [hidden] { display: none !important; } .dhe button, .dhe textarea, .dhe input, .dhe output { font-family: inherit; color: inherit; margin: 0; text-transform: none; letter-spacing: normal; box-shadow: none; background-image: none; float: none; text-shadow: none; } .dhe button { cursor: pointer; line-height: 1.2; -webkit-tap-highlight-color: transparent; } .dhe :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; } .dhe p { margin: 0; } .dhe h2 { margin: 0; font-size: 13px; font-weight: 700; letter-spacing: .02em; color: var(--muted); line-height: 1.3; } .dhe .dhe-btn { min-height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); font-weight: 600; font-size: 16px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: auto; height: auto; } .dhe .dhe-btn:hover { border-color: var(--accent); } .dhe .dhe-btn:disabled { opacity: .45; cursor: default; border-color: var(--line); } .dhe .dhe-btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); } .dhe .dhe-btn.primary:hover { filter: brightness(1.06); } .dhe .dhe-btn.danger { color: var(--danger); } .dhe .dhe-btn.icon { width: 44px; padding: 0; } .dhe .dhe-btn svg { width: 20px; height: 20px; } .dhe .dhe-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; } .dhe .dhe-bar .grow { flex: 1; min-width: 0; } .dhe .dhe-status { font-size: 14px; color: var(--muted); font-weight: 600; margin-top: -4px; } .dhe .dhe-status.ok { color: var(--ok); } .dhe .dhe-status.dirty { color: var(--accent); } .dhe .dhe-test { font-size: 12px; font-weight: 700; color: var(--accent); background: var(--accent-soft); border-radius: 999px; padding: 2px 9px; } .dhe .dhe-tabs { display: inline-flex; background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 3px; gap: 3px; justify-self: start; } .dhe .dhe-tabs button { min-height: 38px; padding: 0 16px; border: 0; border-radius: 9px; background: transparent; font-weight: 600; font-size: 15px; color: var(--muted); } .dhe .dhe-tabs button[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.12); } .dhe .dhe-tabs .count { font-weight: 400; color: var(--muted); } .dhe .dhe-stage-wrap { display: grid; gap: 6px; justify-items: center; } .dhe .dhe-stage { position: relative; width: 100%; background: var(--stage); border-radius: 12px; overflow: hidden; } .dhe .dhe-stage img.dhe-bg { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; display: block; margin: 0; user-select: none; -webkit-user-drag: none; pointer-events: none; border: 0; } .dhe .dhe-stage .canvas-container { position: absolute !important; inset: 0; } .dhe .dhe-stage canvas { max-width: none !important; max-height: none !important; } .dhe .dhe-loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font-weight: 600; background: var(--stage); text-align: center; padding: 16px; z-index: 2; } .dhe .dhe-readout { width: 100%; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 13px; color: var(--muted); } .dhe .dhe-readout strong { color: var(--ink); font-weight: 600; } .dhe .dhe-quick { width: 100%; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; } .dhe .dhe-quick-label { font-size: 13px; font-weight: 600; color: var(--muted); } .dhe .dhe-fine { color: var(--muted); font-size: 13px; } .dhe .dhe-toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; } .dhe .dhe-toolbar .grow { flex: 1; } .dhe .dhe-panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: grid; gap: 12px; } .dhe .dhe-hint { color: var(--muted); font-size: 15px; } .dhe textarea.dhe-txt { display: block; width: 100%; min-height: 84px; resize: vertical; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; background: var(--surface-2); font-size: 18px; line-height: 1.4; unicode-bidi: plaintext; text-align: start; height: auto; } .dhe textarea.dhe-txt:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--accent-soft); } .dhe .dhe-fonts { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; -webkit-overflow-scrolling: touch; } .dhe .dhe-chip { flex: 0 0 auto; min-width: 104px; max-width: 170px; min-height: 64px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); padding: 6px 10px; display: grid; gap: 2px; text-align: center; } .dhe .dhe-chip .sample { font-size: 22px; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; unicode-bidi: plaintext; } .dhe .dhe-chip .name { font-size: 12px; color: var(--muted); } .dhe .dhe-chip[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); box-shadow: inset 0 0 0 1px var(--accent); } .dhe .dhe-chip.warn .name { color: var(--danger); } .dhe .dhe-chip.loading { opacity: .55; } .dhe .dhe-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; } .dhe .dhe-stepper { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--surface); } .dhe .dhe-stepper button { width: 44px; min-height: 42px; border: 0; background: var(--surface-2); font-size: 20px; font-weight: 700; padding: 0; touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; } .dhe .dhe-stepper button:active { background: var(--accent-soft); } .dhe .dhe-stepper output { min-width: 128px; text-align: center; font-size: 14px; padding: 0 6px; } .dhe .dhe-seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; } .dhe .dhe-seg button { min-height: 42px; padding: 0 12px; border: 0; background: var(--surface-2); font-weight: 600; font-size: 14px; } .dhe .dhe-seg button + button { border-inline-start: 1px solid var(--line); } .dhe .dhe-seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); } .dhe .dhe-symbols { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; } .dhe .dhe-sym { border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); padding: 10px 6px 6px; display: grid; gap: 4px; justify-items: center; font-size: 13px; color: var(--muted); } .dhe .dhe-sym svg { width: 44px; height: 38px; color: var(--ink); } .dhe .dhe-sym:hover { border-color: var(--accent); } .dhe .dhe-nudge { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; } .dhe .dhe-nudge-label { font-size: 13px; font-weight: 600; color: var(--muted); margin-inline-end: 4px; } .dhe .dhe-nudge button { width: 44px; height: 44px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); display: inline-grid; place-items: center; padding: 0; touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; } .dhe .dhe-nudge button.wide { width: auto; padding: 0 14px; font-weight: 600; font-size: 14px; } .dhe .dhe-nudge button svg { width: 20px; height: 20px; } .dhe .dhe-nudge button:active { background: var(--accent-soft); border-color: var(--accent); } .dhe .dhe-issues { padding: 10px 14px; background: var(--danger-soft); color: var(--danger); border-radius: 10px; display: grid; gap: 4px; font-size: 14px; font-weight: 600; } .dhe details.dhe-settings { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 0 14px; } .dhe details.dhe-settings summary { min-height: 44px; display: flex; align-items: center; font-weight: 600; cursor: pointer; font-size: 15px; } .dhe details.dhe-settings .body { display: grid; gap: 10px; padding-bottom: 14px; font-size: 15px; } .dhe details.dhe-settings label { display: flex; gap: 8px; align-items: center; font-weight: 400; margin: 0; } .dhe details.dhe-settings input { width: 18px; height: 18px; accent-color: var(--accent); } .dhe .dhe-toast { position: fixed; left: 16px; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); margin: 0 auto; max-width: 520px; background: var(--ink); color: #fff; border-radius: 12px; padding: 12px 16px; font-weight: 600; font-size: 15px; box-shadow: 0 6px 24px rgba(0,0,0,.25); transition: opacity .2s, transform .2s; z-index: 2147483000; opacity: 0; transform: translateY(8px); pointer-events: none; text-align: center; } .dhe .dhe-toast.show { opacity: 1; transform: none; } @media (prefers-reduced-motion: reduce) { .dhe .dhe-toast { transition: none; } } @media (max-width: 420px) { .dhe { padding: 10px; } .dhe .dhe-stepper output { min-width: 108px; } .dhe .dhe-bar .dhe-btn { padding: 0 12px; } } ';
-  const VERSION = '202609261515';
+  const CSS_TEXT = '.dhe { --ground: #f6f4f0; --surface: #ffffff; --surface-2: #f7f5f1; --ink: #1d1a16; --muted: #6b645a; --line: #e0dbd2; --accent: #8f6f33; --accent-ink: #ffffff; --accent-soft: #f2eadb; --brand: #c8a96e; --danger: #b3261e; --danger-soft: #fbeae8; --stage: #e7e3dc; --focus: #2f6fd6; --ok: #1e7b3a; direction: rtl; text-align: right; color: var(--ink); font-family: inherit; font-size: 16px; line-height: 1.4; display: grid; gap: 12px; margin: 12px 0 20px; padding: 12px; background: var(--ground); border: 1px solid var(--line); border-radius: 14px; box-sizing: border-box; width: 100%; max-width: 760px; } .dhe *, .dhe *::before, .dhe *::after { box-sizing: border-box; } .dhe [hidden] { display: none !important; } .dhe button, .dhe textarea, .dhe input, .dhe output { font-family: inherit; color: inherit; margin: 0; text-transform: none; letter-spacing: normal; box-shadow: none; background-image: none; float: none; text-shadow: none; } .dhe button { cursor: pointer; line-height: 1.2; -webkit-tap-highlight-color: transparent; } .dhe :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; } .dhe p { margin: 0; } .dhe h2 { margin: 0; font-size: 13px; font-weight: 700; letter-spacing: .02em; color: var(--muted); line-height: 1.3; } .dhe .dhe-btn { min-height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); font-weight: 600; font-size: 16px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: auto; height: auto; } .dhe .dhe-btn:hover { border-color: var(--accent); } .dhe .dhe-btn:disabled { opacity: .45; cursor: default; border-color: var(--line); } .dhe .dhe-btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); } .dhe .dhe-btn.primary:hover { filter: brightness(1.06); } .dhe .dhe-btn.danger { color: var(--danger); } .dhe .dhe-btn.icon { width: 44px; padding: 0; } .dhe .dhe-btn svg { width: 20px; height: 20px; } .dhe .dhe-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; } .dhe .dhe-bar .grow { flex: 1; min-width: 0; } .dhe .dhe-status { font-size: 14px; color: var(--muted); font-weight: 600; margin-top: -4px; } .dhe .dhe-status.ok { color: var(--ok); } .dhe .dhe-status.dirty { color: var(--accent); } .dhe .dhe-test { font-size: 12px; font-weight: 700; color: var(--accent); background: var(--accent-soft); border-radius: 999px; padding: 2px 9px; } .dhe .dhe-tabs { display: inline-flex; background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 3px; gap: 3px; justify-self: start; } .dhe .dhe-tabs button { min-height: 38px; padding: 0 16px; border: 0; border-radius: 9px; background: transparent; font-weight: 600; font-size: 15px; color: var(--muted); } .dhe .dhe-tabs button[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.12); } .dhe .dhe-tabs .count { font-weight: 400; color: var(--muted); } .dhe .dhe-stage-wrap { display: grid; gap: 6px; justify-items: center; } .dhe .dhe-stage { position: relative; width: 100%; background: var(--stage); border-radius: 12px; overflow: hidden; } .dhe .dhe-stage img.dhe-bg { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; display: block; margin: 0; user-select: none; -webkit-user-drag: none; pointer-events: none; border: 0; } .dhe .dhe-stage .canvas-container { position: absolute !important; inset: 0; } .dhe .dhe-stage canvas { max-width: none !important; max-height: none !important; } .dhe .dhe-loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font-weight: 600; background: var(--stage); text-align: center; padding: 16px; z-index: 2; } .dhe .dhe-readout { width: 100%; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 13px; color: var(--muted); } .dhe .dhe-readout strong { color: var(--ink); font-weight: 600; } .dhe .dhe-quick { width: 100%; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; } .dhe .dhe-quick-label { font-size: 13px; font-weight: 600; color: var(--muted); } .dhe .dhe-fine { color: var(--muted); font-size: 13px; } .dhe .dhe-toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; } .dhe .dhe-toolbar .grow { flex: 1; } .dhe .dhe-panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: grid; gap: 12px; } .dhe .dhe-hint { color: var(--muted); font-size: 15px; } .dhe .dhe-edit { position: absolute; top: 6px; left: 6px; right: 6px; z-index: 6; display: flex; gap: 6px; align-items: flex-start; } .dhe .dhe-edit textarea { flex: 1; min-width: 0; min-height: 46px; box-sizing: border-box; border: 2px solid var(--accent); border-radius: 10px; background: rgba(255, 255, 255, 0.95); color: #1d1a16; padding: 9px 12px; font-size: 18px; line-height: 1.35; resize: none; overflow: auto; unicode-bidi: plaintext; text-align: center; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22); } .dhe .dhe-edit textarea:focus { outline: none; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22), 0 0 0 3px var(--accent-soft); } .dhe .dhe-edit textarea::placeholder { color: #8d857a; } .dhe .dhe-edit button { width: 46px; min-height: 46px; border: 0; border-radius: 10px; background: var(--accent); color: var(--accent-ink); font-size: 20px; font-weight: 700; padding: 0; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22); } .dhe .dhe-fonts { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; -webkit-overflow-scrolling: touch; } .dhe .dhe-chip { flex: 0 0 auto; min-width: 104px; max-width: 170px; min-height: 64px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); padding: 6px 10px; display: grid; gap: 2px; text-align: center; } .dhe .dhe-chip .sample { font-size: 22px; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; unicode-bidi: plaintext; } .dhe .dhe-chip .name { font-size: 12px; color: var(--muted); } .dhe .dhe-chip[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); box-shadow: inset 0 0 0 1px var(--accent); } .dhe .dhe-chip.warn .name { color: var(--danger); } .dhe .dhe-chip.loading { opacity: .55; } .dhe .dhe-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; } .dhe .dhe-stepper { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--surface); } .dhe .dhe-stepper button { width: 44px; min-height: 42px; border: 0; background: var(--surface-2); font-size: 20px; font-weight: 700; padding: 0; touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; } .dhe .dhe-stepper button:active { background: var(--accent-soft); } .dhe .dhe-stepper output { min-width: 128px; text-align: center; font-size: 14px; padding: 0 6px; } .dhe .dhe-seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; } .dhe .dhe-seg button { min-height: 42px; padding: 0 12px; border: 0; background: var(--surface-2); font-weight: 600; font-size: 14px; } .dhe .dhe-seg button + button { border-inline-start: 1px solid var(--line); } .dhe .dhe-seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); } .dhe .dhe-symbols { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; } .dhe .dhe-sym { border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); padding: 10px 6px 6px; display: grid; gap: 4px; justify-items: center; font-size: 13px; color: var(--muted); } .dhe .dhe-sym svg { width: 44px; height: 38px; color: var(--ink); } .dhe .dhe-sym:hover { border-color: var(--accent); } .dhe .dhe-nudge { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; } .dhe .dhe-nudge-label { font-size: 13px; font-weight: 600; color: var(--muted); margin-inline-end: 4px; } .dhe .dhe-nudge button { width: 44px; height: 44px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); display: inline-grid; place-items: center; padding: 0; touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; } .dhe .dhe-nudge button.wide { width: auto; padding: 0 14px; font-weight: 600; font-size: 14px; } .dhe .dhe-nudge button svg { width: 20px; height: 20px; } .dhe .dhe-nudge button:active { background: var(--accent-soft); border-color: var(--accent); } .dhe .dhe-issues { padding: 10px 14px; background: var(--danger-soft); color: var(--danger); border-radius: 10px; display: grid; gap: 4px; font-size: 14px; font-weight: 600; } .dhe details.dhe-settings { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 0 14px; } .dhe details.dhe-settings summary { min-height: 44px; display: flex; align-items: center; font-weight: 600; cursor: pointer; font-size: 15px; } .dhe details.dhe-settings .body { display: grid; gap: 10px; padding-bottom: 14px; font-size: 15px; } .dhe details.dhe-settings label { display: flex; gap: 8px; align-items: center; font-weight: 400; margin: 0; } .dhe details.dhe-settings input { width: 18px; height: 18px; accent-color: var(--accent); } .dhe .dhe-toast { position: fixed; left: 16px; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); margin: 0 auto; max-width: 520px; background: var(--ink); color: #fff; border-radius: 12px; padding: 12px 16px; font-weight: 600; font-size: 15px; box-shadow: 0 6px 24px rgba(0,0,0,.25); transition: opacity .2s, transform .2s; z-index: 2147483000; opacity: 0; transform: translateY(8px); pointer-events: none; text-align: center; } .dhe .dhe-toast.show { opacity: 1; transform: none; } @media (prefers-reduced-motion: reduce) { .dhe .dhe-toast { transition: none; } } @media (max-width: 420px) { .dhe { padding: 10px; } .dhe .dhe-stepper output { min-width: 108px; } .dhe .dhe-bar .dhe-btn { padding: 0 12px; } } ';
+  const VERSION = '202609261603';
 
   // ------------------------------------------------------------------ config
 
@@ -943,6 +943,11 @@
     <div class="dhe-stage" data-el="stage">
       <img class="dhe-bg" data-el="bg" alt="">
       <canvas data-el="cv"></canvas>
+      <div class="dhe-edit" data-el="editBox" hidden>
+        <textarea data-el="editTa" rows="1" dir="auto" spellcheck="false" autocapitalize="off" autocomplete="off"
+          aria-label="הטקסט לחריטה" placeholder="כתבו כאן את הטקסט…"></textarea>
+        <button type="button" data-el="editDone" aria-label="סיום עריכת הטקסט">✓</button>
+      </div>
       <div class="dhe-loading" data-el="loading">טוען את העורך…</div>
     </div>
     <div class="dhe-readout"><span data-el="areaInfo"></span><span data-el="selInfo"></span></div>
@@ -959,14 +964,16 @@
     <button class="dhe-btn icon" data-el="btnRedo" type="button" aria-label="חזרה" title="חזרה"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7l-5 5 5 5"/><path d="M4 12h11a5 5 0 0 1 0 10h-2"/></svg></button>
   </div>
   <section class="dhe-panel" data-el="symPanel" hidden><h2>בחרו סמל</h2><div class="dhe-symbols" data-el="symGrid"></div></section>
-  <section class="dhe-panel" data-el="panelEmpty"><p class="dhe-hint">הקישו על טקסט או סמל בתמונה כדי לבחור אותו. אחרי שבחרתם, גררו בכל מקום על התמונה כדי להזיז אותו, או השתמשו בחיצים.</p></section>
+  <section class="dhe-panel" data-el="panelEmpty"><p class="dhe-hint">הקישו על הטקסט שעל המוצר כדי לכתוב ולערוך אותו. גררו בכל מקום על התמונה כדי להזיז, וצבטו בשתי אצבעות כדי לשנות גודל.</p></section>
   <section class="dhe-panel" data-el="panelText" hidden>
     <h2>טקסט</h2>
-    <textarea class="dhe-txt" data-el="txt" dir="rtl" rows="3" spellcheck="false" aria-label="הטקסט לחריטה" placeholder="כתבו כאן את הטקסט לחריטה"></textarea>
+    <div class="dhe-row">
+      <button class="dhe-btn" data-el="btnEditTxt" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> עריכת הטקסט</button>
+      <button class="dhe-btn danger" data-el="tDelete" type="button">מחיקה</button>
+    </div>
     <div class="dhe-fonts" data-el="fontChips" role="group" aria-label="גופן"></div>
     <div class="dhe-row">${stepper()}
       <div class="dhe-seg" data-el="alignSeg" role="group" aria-label="יישור"><button type="button" data-align="right">ימין</button><button type="button" data-align="center">מרכז</button><button type="button" data-align="left">שמאל</button></div>
-      <button class="dhe-btn danger" data-el="tDelete" type="button">מחיקה</button>
     </div>
     ${nudgeRow()}
   </section>
@@ -1150,6 +1157,7 @@
 
     function renderSurface() {
       const s = surf();
+      endEdit(false);
       quiet++; canvas.discardActiveObject(); canvas.clear(); quiet--;
       foMap.clear();
       E.bg.src = s.img.url;
@@ -1209,13 +1217,20 @@
       });
 
       // Touch: a finger near an object picks it; with something selected a
-      // drag anywhere on the image moves it; a tap on empty space deselects.
-      let drag = null;
+      // drag anywhere on the image moves it; a tap (no drag) on a text opens
+      // the writing bar; a tap on empty space deselects.
+      let drag = null, tapT = null;
       if (COARSE) canvas._shouldClearSelection = () => false;
       canvas.on('mouse:down', opt => {
         if (!COARSE) return;
         drag = null;
-        if (opt.target) return;
+        tapT = null;
+        if (opt.target) {
+          // Fabric moves it itself; remember where it started so a tap
+          // (no movement) can open the text for writing
+          tapT = { fo: opt.target, ox: opt.target.left, oy: opt.target.top };
+          return;
+        }
         const p = canvas.getPointer(opt.e);
         const near = nearestObject(p, 24 / k);
         const active = canvas.getActiveObject();
@@ -1236,13 +1251,25 @@
         updateReadout();
         canvas.requestRenderAll();
       });
+      const tapToEdit = fo => {
+        const o = findObj(fo.dhId);
+        if (o && o.type === 'text') startEdit(o);
+      };
       canvas.on('mouse:up', () => {
-        const d = drag;
+        const d = drag, t = tapT;
         drag = null;
+        tapT = null;
         if (d && d.moved) commitMove(d.fo);
+        else if (d && d.picked) tapToEdit(d.fo);
         else if (d && !d.picked) canvas.discardActiveObject();
+        else if (t && Math.hypot(t.fo.left - t.ox, t.fo.top - t.oy) * k < 3) tapToEdit(t.fo);
         if (guides.v || guides.h) guides.v = guides.h = false;
         canvas.requestRenderAll();
+      });
+
+      // desktop: double-click a text to edit it
+      canvas.on('mouse:dblclick', opt => {
+        if (opt.target) tapToEdit(opt.target);
       });
 
       // Two-finger pinch resizes the selected (or nearest) object.
@@ -1264,6 +1291,7 @@
         if (!fo) return;
         if (fo !== canvas.getActiveObject()) canvas.setActiveObject(fo);
         drag = null;
+        tapT = null;
         fo.lockMovementX = fo.lockMovementY = true;
         pinch = { fo, d0: fingerDist(e.touches), s0: fo.scaleX || 1 };
       }, { capture: true, passive: false });
@@ -1359,6 +1387,7 @@
           }
           m.font = f.id;
           lastFont = f.id;
+          if (editingId === m.id) E.editTa.style.fontFamily = `"dh-${f.id}", system-ui, sans-serif`;
           const { shrunk } = placeObject(m, { select: true });
           if (shrunk) toast('הטקסט הוקטן כדי להיכנס לאזור החריטה');
           syncPanel(false);
@@ -1391,6 +1420,7 @@
 
     function syncPanel(reset) {
       const o = activeModel();
+      if (editingId && (!o || o.id !== editingId)) endEdit();
       E.quick.hidden = !o;
       E.panelEmpty.hidden = !!o;
       E.panelText.hidden = !(o && o.type === 'text');
@@ -1398,7 +1428,7 @@
       if (!o) { editId = null; updateReadout(); return; }
       let sizeText;
       if (o.type === 'text') {
-        if (reset || editId !== o.id) { E.txt.value = o.text; buildFontChips(o); } else updateFontChips(o);
+        if (reset || editId !== o.id) buildFontChips(o); else updateFontChips(o);
         const lay = layoutFor(o);
         sizeText = lay.polys.length ? `גובה אות ${fmt(lay.letterHeightMm)} מ״מ` : `גופן ${fmt(o.sizeMm)} מ״מ`;
         for (const b of E.alignSeg.children) b.setAttribute('aria-pressed', String(b.dataset.align === o.align));
@@ -1461,7 +1491,7 @@
       placeObject(o, { select: true });
       syncPanel(true);
       afterChange(true);
-      E.txt.focus({ preventScroll: true });
+      startEdit(o);
     }
 
     function addSymbol(sym) {
@@ -1480,6 +1510,7 @@
     function deleteActive() {
       const o = activeModel();
       if (!o) return;
+      if (editingId === o.id) { editingId = null; E.editBox.hidden = true; }
       const fo = foMap.get(o.id);
       cur().objects = cur().objects.filter(x => x.id !== o.id);
       quiet++; canvas.discardActiveObject(); if (fo) canvas.remove(fo); quiet--;
@@ -1527,11 +1558,9 @@
     }
 
     let typingTimer = null;
-    function onTextInput() {
-      const o = activeModel();
-      if (!o || o.type !== 'text') return;
-      const t = E.txt, lim = surf().limits;
-      let v = t.value, note = '';
+    function applyLimits(v) {
+      const lim = surf().limits;
+      let note = '';
       if (FORBIDDEN_RE.test(v)) { v = v.replace(FORBIDDEN_RE, ''); note = 'ניקוד ואימוג\'י לא נתמכים בחריטה'; }
       FORBIDDEN_RE.lastIndex = 0;
       let lines = v.split('\n');
@@ -1541,12 +1570,59 @@
         if (chars.length > lim.charsPerLine) { note = `אפשר עד ${lim.charsPerLine} תווים בשורה`; return chars.slice(0, lim.charsPerLine).join(''); }
         return l;
       });
-      v = lines.join('\n');
+      return { v: lines.join('\n'), note };
+    }
+
+    // ----------------------------------------------------- inline editing
+    // Tapping a text on the product opens a floating writing bar pinned to
+    // the top of the image, so the design stays in view and the page does
+    // not jump when the keyboard opens. The text updates live as you type.
+
+    let editingId = null;
+
+    function fitEditBox() {
+      const t = E.editTa;
+      t.style.height = 'auto';
+      t.style.height = Math.min(t.scrollHeight, Math.max(88, E.stage.clientHeight * 0.55)) + 'px';
+    }
+
+    function startEdit(o) {
+      if (!o || o.type !== 'text') return;
+      const fo = foMap.get(o.id);
+      if (fo && canvas.getActiveObject() !== fo) { canvas.setActiveObject(fo); canvas.requestRenderAll(); }
+      editingId = o.id;
+      E.editBox.hidden = false;
+      E.editTa.value = o.text;
+      E.editTa.style.fontFamily = `"dh-${o.font}", system-ui, sans-serif`;
+      E.editTa.style.textAlign = o.align === 'left' ? 'left' : o.align === 'right' ? 'right' : 'center';
+      fitEditBox();
+      E.editTa.focus({ preventScroll: true });
+      const len = E.editTa.value.length;
+      try { E.editTa.setSelectionRange(len, len); } catch (e) { /* ok */ }
+      const r = E.stage.getBoundingClientRect();
+      const vh = window.innerHeight || 700;
+      if (r.top < 0 || r.top > vh * 0.4) E.stage.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function endEdit(commit) {
+      if (!editingId) return;
+      editingId = null;
+      E.editBox.hidden = true;
+      clearTimeout(typingTimer);
+      if (commit !== false) pushHistory();
+    }
+
+    function onEditInput() {
+      const o = editingId && findObj(editingId);
+      if (!o) { endEdit(false); return; }
+      const t = E.editTa;
+      const { v, note } = applyLimits(t.value);
       if (v !== t.value) { const pos = Math.min(t.selectionStart, v.length); t.value = v; t.setSelectionRange(pos, pos); }
       if (note) toast(note);
       o.text = v;
       const { shrunk } = placeObject(o, { select: true });
       if (shrunk) toast('הטקסט הוקטן כדי להיכנס לאזור החריטה');
+      fitEditBox();
       syncPanel(false);
       afterChange(false);
       clearTimeout(typingTimer);
@@ -1636,6 +1712,7 @@
       updateUndo();
     }
     function restore(snap) {
+      endEdit(false);
       const d = JSON.parse(snap);
       state.surfaces = d.surfaces;
       state.current = d.current;
@@ -1772,6 +1849,7 @@
     let saving = false;
     async function save() {
       if (saving) return;
+      endEdit();
       const issues = validate();
       renderIssues(issues, true);
       canvas.requestRenderAll();
@@ -1847,8 +1925,10 @@
       });
       E.btnUndo.addEventListener('click', () => { if (hist.idx > 0) { hist.idx--; restore(hist.stack[hist.idx]); } });
       E.btnRedo.addEventListener('click', () => { if (hist.idx < hist.stack.length - 1) { hist.idx++; restore(hist.stack[hist.idx]); } });
-      E.txt.addEventListener('input', onTextInput);
-      E.txt.addEventListener('blur', () => pushHistory());
+      E.editTa.addEventListener('input', onEditInput);
+      E.editTa.addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); endEdit(); } });
+      E.editDone.addEventListener('click', () => endEdit());
+      E.btnEditTxt.addEventListener('click', () => startEdit(activeModel()));
       E.tDelete.addEventListener('click', deleteActive);
       E.sDelete.addEventListener('click', deleteActive);
       for (const b of E.alignSeg.children) {
@@ -1914,6 +1994,7 @@
       hasContent: () => allObjects().some(o => o.type !== 'text' || o.text.trim()),
       // "עצבו בשבילי": the text, font and symbols stay in the regular fields.
       leave() {
+        endEdit(false);
         clearTimeout(syncTimer);
         syncToPage();
         bridge.setDesignField('');
@@ -1988,16 +2069,20 @@
     session.bridge.exit();
     session.root.hidden = true;
     session.root.style.display = 'none';
-    if (session.bar) { session.bar.style.display = ''; session.bar.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
     session.open = false;
+    if (session.ctx && session.ctx.onExit) session.ctx.onExit();
+    else if (session.ctx && session.ctx.bar) {
+      session.ctx.bar.style.display = '';
+      session.ctx.bar.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
   }
 
   async function open(ctx) {
     injectCss();
     if (session) {
+      session.ctx = ctx;
       session.root.hidden = false;
       session.root.style.display = '';
-      if (session.bar) session.bar.style.display = 'none';
       if (session.surfaces) session.bridge.enter(session.surfaces);
       session.open = true;
       if (session.editor) session.editor.afterShow();
@@ -2010,10 +2095,9 @@
     root.setAttribute('dir', 'rtl');
     root.setAttribute('data-dh-editor', VERSION);
     root.innerHTML = editorHtml(!!ctx.test);
-    const anchor = ctx.bar || ctx.anchor;
+    const anchor = ctx.anchor || ctx.bar;
     anchor.parentNode.insertBefore(root, anchor.nextSibling);
-    if (ctx.bar) ctx.bar.style.display = 'none';
-    session = { root, bar: ctx.bar, bridge, editor: null, open: true };
+    session = { root, ctx, bridge, editor: null, open: true };
     bridge.guardCart(() => session.open && session.editor && !session.editor.isSaved(), () => session.editor.nagSave());
     root.querySelector('[data-el="btnForMe"]').addEventListener('click', () => { if (!session.editor) close(); });
     root.scrollIntoView({ behavior: 'smooth', block: 'start' });

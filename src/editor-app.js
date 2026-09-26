@@ -349,6 +349,11 @@
     <div class="dhe-stage" data-el="stage">
       <img class="dhe-bg" data-el="bg" alt="">
       <canvas data-el="cv"></canvas>
+      <div class="dhe-edit" data-el="editBox" hidden>
+        <textarea data-el="editTa" rows="1" dir="auto" spellcheck="false" autocapitalize="off" autocomplete="off"
+          aria-label="הטקסט לחריטה" placeholder="כתבו כאן את הטקסט…"></textarea>
+        <button type="button" data-el="editDone" aria-label="סיום עריכת הטקסט">✓</button>
+      </div>
       <div class="dhe-loading" data-el="loading">טוען את העורך…</div>
     </div>
     <div class="dhe-readout"><span data-el="areaInfo"></span><span data-el="selInfo"></span></div>
@@ -365,14 +370,16 @@
     <button class="dhe-btn icon" data-el="btnRedo" type="button" aria-label="חזרה" title="חזרה"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7l-5 5 5 5"/><path d="M4 12h11a5 5 0 0 1 0 10h-2"/></svg></button>
   </div>
   <section class="dhe-panel" data-el="symPanel" hidden><h2>בחרו סמל</h2><div class="dhe-symbols" data-el="symGrid"></div></section>
-  <section class="dhe-panel" data-el="panelEmpty"><p class="dhe-hint">הקישו על טקסט או סמל בתמונה כדי לבחור אותו. אחרי שבחרתם, גררו בכל מקום על התמונה כדי להזיז אותו, או השתמשו בחיצים.</p></section>
+  <section class="dhe-panel" data-el="panelEmpty"><p class="dhe-hint">הקישו על הטקסט שעל המוצר כדי לכתוב ולערוך אותו. גררו בכל מקום על התמונה כדי להזיז, וצבטו בשתי אצבעות כדי לשנות גודל.</p></section>
   <section class="dhe-panel" data-el="panelText" hidden>
     <h2>טקסט</h2>
-    <textarea class="dhe-txt" data-el="txt" dir="rtl" rows="3" spellcheck="false" aria-label="הטקסט לחריטה" placeholder="כתבו כאן את הטקסט לחריטה"></textarea>
+    <div class="dhe-row">
+      <button class="dhe-btn" data-el="btnEditTxt" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> עריכת הטקסט</button>
+      <button class="dhe-btn danger" data-el="tDelete" type="button">מחיקה</button>
+    </div>
     <div class="dhe-fonts" data-el="fontChips" role="group" aria-label="גופן"></div>
     <div class="dhe-row">${stepper()}
       <div class="dhe-seg" data-el="alignSeg" role="group" aria-label="יישור"><button type="button" data-align="right">ימין</button><button type="button" data-align="center">מרכז</button><button type="button" data-align="left">שמאל</button></div>
-      <button class="dhe-btn danger" data-el="tDelete" type="button">מחיקה</button>
     </div>
     ${nudgeRow()}
   </section>
@@ -556,6 +563,7 @@
 
     function renderSurface() {
       const s = surf();
+      endEdit(false);
       quiet++; canvas.discardActiveObject(); canvas.clear(); quiet--;
       foMap.clear();
       E.bg.src = s.img.url;
@@ -615,13 +623,20 @@
       });
 
       // Touch: a finger near an object picks it; with something selected a
-      // drag anywhere on the image moves it; a tap on empty space deselects.
-      let drag = null;
+      // drag anywhere on the image moves it; a tap (no drag) on a text opens
+      // the writing bar; a tap on empty space deselects.
+      let drag = null, tapT = null;
       if (COARSE) canvas._shouldClearSelection = () => false;
       canvas.on('mouse:down', opt => {
         if (!COARSE) return;
         drag = null;
-        if (opt.target) return;
+        tapT = null;
+        if (opt.target) {
+          // Fabric moves it itself; remember where it started so a tap
+          // (no movement) can open the text for writing
+          tapT = { fo: opt.target, ox: opt.target.left, oy: opt.target.top };
+          return;
+        }
         const p = canvas.getPointer(opt.e);
         const near = nearestObject(p, 24 / k);
         const active = canvas.getActiveObject();
@@ -642,13 +657,25 @@
         updateReadout();
         canvas.requestRenderAll();
       });
+      const tapToEdit = fo => {
+        const o = findObj(fo.dhId);
+        if (o && o.type === 'text') startEdit(o);
+      };
       canvas.on('mouse:up', () => {
-        const d = drag;
+        const d = drag, t = tapT;
         drag = null;
+        tapT = null;
         if (d && d.moved) commitMove(d.fo);
+        else if (d && d.picked) tapToEdit(d.fo);
         else if (d && !d.picked) canvas.discardActiveObject();
+        else if (t && Math.hypot(t.fo.left - t.ox, t.fo.top - t.oy) * k < 3) tapToEdit(t.fo);
         if (guides.v || guides.h) guides.v = guides.h = false;
         canvas.requestRenderAll();
+      });
+
+      // desktop: double-click a text to edit it
+      canvas.on('mouse:dblclick', opt => {
+        if (opt.target) tapToEdit(opt.target);
       });
 
       // Two-finger pinch resizes the selected (or nearest) object.
@@ -670,6 +697,7 @@
         if (!fo) return;
         if (fo !== canvas.getActiveObject()) canvas.setActiveObject(fo);
         drag = null;
+        tapT = null;
         fo.lockMovementX = fo.lockMovementY = true;
         pinch = { fo, d0: fingerDist(e.touches), s0: fo.scaleX || 1 };
       }, { capture: true, passive: false });
@@ -765,6 +793,7 @@
           }
           m.font = f.id;
           lastFont = f.id;
+          if (editingId === m.id) E.editTa.style.fontFamily = `"dh-${f.id}", system-ui, sans-serif`;
           const { shrunk } = placeObject(m, { select: true });
           if (shrunk) toast('הטקסט הוקטן כדי להיכנס לאזור החריטה');
           syncPanel(false);
@@ -797,6 +826,7 @@
 
     function syncPanel(reset) {
       const o = activeModel();
+      if (editingId && (!o || o.id !== editingId)) endEdit();
       E.quick.hidden = !o;
       E.panelEmpty.hidden = !!o;
       E.panelText.hidden = !(o && o.type === 'text');
@@ -804,7 +834,7 @@
       if (!o) { editId = null; updateReadout(); return; }
       let sizeText;
       if (o.type === 'text') {
-        if (reset || editId !== o.id) { E.txt.value = o.text; buildFontChips(o); } else updateFontChips(o);
+        if (reset || editId !== o.id) buildFontChips(o); else updateFontChips(o);
         const lay = layoutFor(o);
         sizeText = lay.polys.length ? `גובה אות ${fmt(lay.letterHeightMm)} מ״מ` : `גופן ${fmt(o.sizeMm)} מ״מ`;
         for (const b of E.alignSeg.children) b.setAttribute('aria-pressed', String(b.dataset.align === o.align));
@@ -867,7 +897,7 @@
       placeObject(o, { select: true });
       syncPanel(true);
       afterChange(true);
-      E.txt.focus({ preventScroll: true });
+      startEdit(o);
     }
 
     function addSymbol(sym) {
@@ -886,6 +916,7 @@
     function deleteActive() {
       const o = activeModel();
       if (!o) return;
+      if (editingId === o.id) { editingId = null; E.editBox.hidden = true; }
       const fo = foMap.get(o.id);
       cur().objects = cur().objects.filter(x => x.id !== o.id);
       quiet++; canvas.discardActiveObject(); if (fo) canvas.remove(fo); quiet--;
@@ -933,11 +964,9 @@
     }
 
     let typingTimer = null;
-    function onTextInput() {
-      const o = activeModel();
-      if (!o || o.type !== 'text') return;
-      const t = E.txt, lim = surf().limits;
-      let v = t.value, note = '';
+    function applyLimits(v) {
+      const lim = surf().limits;
+      let note = '';
       if (FORBIDDEN_RE.test(v)) { v = v.replace(FORBIDDEN_RE, ''); note = 'ניקוד ואימוג\'י לא נתמכים בחריטה'; }
       FORBIDDEN_RE.lastIndex = 0;
       let lines = v.split('\n');
@@ -947,12 +976,59 @@
         if (chars.length > lim.charsPerLine) { note = `אפשר עד ${lim.charsPerLine} תווים בשורה`; return chars.slice(0, lim.charsPerLine).join(''); }
         return l;
       });
-      v = lines.join('\n');
+      return { v: lines.join('\n'), note };
+    }
+
+    // ----------------------------------------------------- inline editing
+    // Tapping a text on the product opens a floating writing bar pinned to
+    // the top of the image, so the design stays in view and the page does
+    // not jump when the keyboard opens. The text updates live as you type.
+
+    let editingId = null;
+
+    function fitEditBox() {
+      const t = E.editTa;
+      t.style.height = 'auto';
+      t.style.height = Math.min(t.scrollHeight, Math.max(88, E.stage.clientHeight * 0.55)) + 'px';
+    }
+
+    function startEdit(o) {
+      if (!o || o.type !== 'text') return;
+      const fo = foMap.get(o.id);
+      if (fo && canvas.getActiveObject() !== fo) { canvas.setActiveObject(fo); canvas.requestRenderAll(); }
+      editingId = o.id;
+      E.editBox.hidden = false;
+      E.editTa.value = o.text;
+      E.editTa.style.fontFamily = `"dh-${o.font}", system-ui, sans-serif`;
+      E.editTa.style.textAlign = o.align === 'left' ? 'left' : o.align === 'right' ? 'right' : 'center';
+      fitEditBox();
+      E.editTa.focus({ preventScroll: true });
+      const len = E.editTa.value.length;
+      try { E.editTa.setSelectionRange(len, len); } catch (e) { /* ok */ }
+      const r = E.stage.getBoundingClientRect();
+      const vh = window.innerHeight || 700;
+      if (r.top < 0 || r.top > vh * 0.4) E.stage.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function endEdit(commit) {
+      if (!editingId) return;
+      editingId = null;
+      E.editBox.hidden = true;
+      clearTimeout(typingTimer);
+      if (commit !== false) pushHistory();
+    }
+
+    function onEditInput() {
+      const o = editingId && findObj(editingId);
+      if (!o) { endEdit(false); return; }
+      const t = E.editTa;
+      const { v, note } = applyLimits(t.value);
       if (v !== t.value) { const pos = Math.min(t.selectionStart, v.length); t.value = v; t.setSelectionRange(pos, pos); }
       if (note) toast(note);
       o.text = v;
       const { shrunk } = placeObject(o, { select: true });
       if (shrunk) toast('הטקסט הוקטן כדי להיכנס לאזור החריטה');
+      fitEditBox();
       syncPanel(false);
       afterChange(false);
       clearTimeout(typingTimer);
@@ -1042,6 +1118,7 @@
       updateUndo();
     }
     function restore(snap) {
+      endEdit(false);
       const d = JSON.parse(snap);
       state.surfaces = d.surfaces;
       state.current = d.current;
@@ -1178,6 +1255,7 @@
     let saving = false;
     async function save() {
       if (saving) return;
+      endEdit();
       const issues = validate();
       renderIssues(issues, true);
       canvas.requestRenderAll();
@@ -1253,8 +1331,10 @@
       });
       E.btnUndo.addEventListener('click', () => { if (hist.idx > 0) { hist.idx--; restore(hist.stack[hist.idx]); } });
       E.btnRedo.addEventListener('click', () => { if (hist.idx < hist.stack.length - 1) { hist.idx++; restore(hist.stack[hist.idx]); } });
-      E.txt.addEventListener('input', onTextInput);
-      E.txt.addEventListener('blur', () => pushHistory());
+      E.editTa.addEventListener('input', onEditInput);
+      E.editTa.addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); endEdit(); } });
+      E.editDone.addEventListener('click', () => endEdit());
+      E.btnEditTxt.addEventListener('click', () => startEdit(activeModel()));
       E.tDelete.addEventListener('click', deleteActive);
       E.sDelete.addEventListener('click', deleteActive);
       for (const b of E.alignSeg.children) {
@@ -1320,6 +1400,7 @@
       hasContent: () => allObjects().some(o => o.type !== 'text' || o.text.trim()),
       // "עצבו בשבילי": the text, font and symbols stay in the regular fields.
       leave() {
+        endEdit(false);
         clearTimeout(syncTimer);
         syncToPage();
         bridge.setDesignField('');
@@ -1394,16 +1475,20 @@
     session.bridge.exit();
     session.root.hidden = true;
     session.root.style.display = 'none';
-    if (session.bar) { session.bar.style.display = ''; session.bar.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
     session.open = false;
+    if (session.ctx && session.ctx.onExit) session.ctx.onExit();
+    else if (session.ctx && session.ctx.bar) {
+      session.ctx.bar.style.display = '';
+      session.ctx.bar.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
   }
 
   async function open(ctx) {
     injectCss();
     if (session) {
+      session.ctx = ctx;
       session.root.hidden = false;
       session.root.style.display = '';
-      if (session.bar) session.bar.style.display = 'none';
       if (session.surfaces) session.bridge.enter(session.surfaces);
       session.open = true;
       if (session.editor) session.editor.afterShow();
@@ -1416,10 +1501,9 @@
     root.setAttribute('dir', 'rtl');
     root.setAttribute('data-dh-editor', VERSION);
     root.innerHTML = editorHtml(!!ctx.test);
-    const anchor = ctx.bar || ctx.anchor;
+    const anchor = ctx.anchor || ctx.bar;
     anchor.parentNode.insertBefore(root, anchor.nextSibling);
-    if (ctx.bar) ctx.bar.style.display = 'none';
-    session = { root, bar: ctx.bar, bridge, editor: null, open: true };
+    session = { root, ctx, bridge, editor: null, open: true };
     bridge.guardCart(() => session.open && session.editor && !session.editor.isSaved(), () => session.editor.nagSave());
     root.querySelector('[data-el="btnForMe"]').addEventListener('click', () => { if (!session.editor) close(); });
     root.scrollIntoView({ behavior: 'smooth', block: 'start' });

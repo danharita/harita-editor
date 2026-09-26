@@ -59,9 +59,14 @@
 
 .dhe .dhe-panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: grid; gap: 12px; }
 .dhe .dhe-hint { color: var(--muted); font-size: 15px; }
-.dhe textarea.dhe-txt { display: block; width: 100%; min-height: 84px; resize: vertical; border: 1px solid var(--line); border-radius: 10px;
-  padding: 10px 12px; background: var(--surface-2); font-size: 18px; line-height: 1.4; unicode-bidi: plaintext; text-align: start; height: auto; }
-.dhe textarea.dhe-txt:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--accent-soft); }
+.dhe .dhe-edit { position: absolute; top: 6px; left: 6px; right: 6px; z-index: 6; display: flex; gap: 6px; align-items: flex-start; }
+.dhe .dhe-edit textarea { flex: 1; min-width: 0; min-height: 46px; box-sizing: border-box; border: 2px solid var(--accent); border-radius: 10px;
+  background: rgba(255, 255, 255, 0.95); color: #1d1a16; padding: 9px 12px; font-size: 18px; line-height: 1.35; resize: none; overflow: auto;
+  unicode-bidi: plaintext; text-align: center; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22); }
+.dhe .dhe-edit textarea:focus { outline: none; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22), 0 0 0 3px var(--accent-soft); }
+.dhe .dhe-edit textarea::placeholder { color: #8d857a; }
+.dhe .dhe-edit button { width: 46px; min-height: 46px; border: 0; border-radius: 10px; background: var(--accent); color: var(--accent-ink);
+  font-size: 20px; font-weight: 700; padding: 0; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22); }
 .dhe .dhe-fonts { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; -webkit-overflow-scrolling: touch; }
 .dhe .dhe-chip { flex: 0 0 auto; min-width: 104px; max-width: 170px; min-height: 64px; border: 1px solid var(--line); border-radius: 10px;
   background: var(--surface-2); padding: 6px 10px; display: grid; gap: 2px; text-align: center; }
