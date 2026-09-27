@@ -23,6 +23,16 @@
   ];
   const JSZIP = { has: () => window.JSZip, src: CDN + 'jszip@3.10.1/dist/jszip.min.js', sri: 'sha384-+mbV2IY1Zk/X1p/nWllGySJSUN8uMs+gUAN10Or95UBH0fpj6GfKgPmgC5EXieXG' };
 
+  // The shared server (Render) that stores the design files and hands the
+  // customer a link. Overridable with <script data-dh-api="..."> on the loader.
+  const API_BASE = (function () {
+    try {
+      var s = document.querySelector('script[data-dh-api]');
+      if (s && s.getAttribute('data-dh-api')) return s.getAttribute('data-dh-api').replace(/\/+$/, '');
+    } catch (e) { /* ignore */ }
+    return 'https://dan-harita-api.onrender.com';
+  }());
+
   // The same font files the current preview uses. `label` is the exact text
   // of the matching option in "סוג כתב".
   const FONT_BASE = 'https://danharita.github.io/custom-fonts/';
@@ -1285,6 +1295,33 @@
       return files;
     }
 
+    // base64 of a string (UTF-8 safe — the design JSON holds Hebrew) or a Blob.
+    async function toB64(data) {
+      let bytes;
+      if (typeof data === 'string') bytes = new TextEncoder().encode(data);
+      else bytes = new Uint8Array(await data.arrayBuffer());
+      let bin = '';
+      const CH = 0x8000;
+      for (let i = 0; i < bytes.length; i += CH) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CH));
+      return btoa(bin);
+    }
+
+    // Sends the design files to the server, which stores them and returns a
+    // short code plus a public preview link. Uses our id as the code.
+    async function uploadDesign(id, files) {
+      const payload = { code: id, productId: bridge.productId, files: {} };
+      for (const f of files) payload.files[f.name] = await toB64(f.data);
+      const r = await fetch(API_BASE + '/api/designs', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      let j = {};
+      try { j = await r.json(); } catch (e) { /* ignore */ }
+      if (!r.ok || !j.ok) throw new Error('upload ' + r.status + ' ' + (j.error || ''));
+      return j; // { ok, code, view, preview }
+    }
+
     async function downloadZip(id, files) {
       await loadScript(JSZIP);
       const zip = new window.JSZip();
@@ -1298,7 +1335,9 @@
       setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
     }
 
-    const designFieldText = id => `עוצב ע״י הלקוח - אין צורך בסקיצה · קוד ${id}` + (test ? ' · בדיקה' : '');
+    const designFieldText = (id, res) => `עוצב ע״י הלקוח - אין צורך בסקיצה · קוד ${id}`
+      + (res && res.view ? ` · ${res.view}` : '')
+      + (test ? ' · בדיקה' : '');
 
     let saving = false;
     async function save() {
@@ -1324,12 +1363,24 @@
         const files = await buildFiles(id);
         window.__dhLastFiles = files;
         if (test) await downloadZip(id, files);
+        // Store on the server (source of truth for engraving). In test mode a
+        // server hiccup shouldn't block — we already have the ZIP; in live mode
+        // it must succeed, so the order never carries a design we can't produce.
+        let res = null;
+        try {
+          res = await uploadDesign(id, files);
+        } catch (e) {
+          console.error('[DHEditor] upload failed', e);
+          if (!test) throw e;
+          toast('העיצוב נשמר מקומית (השרת לא הגיב).');
+        }
+        const finalId = (res && res.code) || id;
         savedSnap = designSnap();
-        savedId = id;
-        bridge.setDesignField(designFieldText(id));
+        savedId = finalId;
+        bridge.setDesignField(designFieldText(finalId, res));
         saveDraft();
         updateStatus();
-        toast(`העיצוב נשמר. קוד העיצוב: ${id}`);
+        toast(`העיצוב נשמר. קוד העיצוב: ${finalId}`);
       } catch (e) {
         console.error('[DHEditor] save failed', e);
         toast('השמירה לא הצליחה. נסו שוב.');
