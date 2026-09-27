@@ -10,7 +10,7 @@
 (function () {
   'use strict';
   var BASE = 'https://danharita.github.io/custom-fonts/editor/';
-  var VER = '202609271329';           // גרסת הטוען (לבדיקה בקונסול: DHEditorLoader)
+  var VER = '202609271339';           // גרסת הטוען (לבדיקה בקונסול: DHEditorLoader)
   var LIVE = false;              // true = מוצג לכל הלקוחות
   var PREFIX = 'engrave-bg-';
   var TEST_KEY = 'dh-editor-test';
@@ -147,7 +147,7 @@
       var old = labelEl ? labelEl.textContent : '';
       if (labelEl) labelEl.textContent = 'טוען את העורך…';
       var s = document.createElement('script');
-      s.src = BASE + 'editor.js';
+      s.src = BASE + 'editor.js?v=' + VER;
       s.onload = function () {
         btn.disabled = false;
         if (labelEl) labelEl.textContent = old;

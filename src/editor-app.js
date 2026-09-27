@@ -400,9 +400,6 @@
       <button class="dhe-btn danger" data-el="tDelete" type="button">מחיקה</button>
     </div>
     <div class="dhe-fonts" data-el="fontChips" role="group" aria-label="גופן"></div>
-    <div class="dhe-row">
-      <div class="dhe-seg" data-el="alignSeg" role="group" aria-label="יישור"><button type="button" data-align="right">ימין</button><button type="button" data-align="center">מרכז</button><button type="button" data-align="left">שמאל</button></div>
-    </div>
     ${nudgeRow()}
   </section>
   <section class="dhe-panel" data-el="panelSym" hidden>
@@ -888,7 +885,6 @@
       if (!o) { editId = null; updateReadout(); return; }
       if (o.type === 'text') {
         if (reset || editId !== o.id) buildFontChips(o); else updateFontChips(o);
-        for (const b of E.alignSeg.children) b.setAttribute('aria-pressed', String(b.dataset.align === o.align));
       } else {
         E.symTitle.textContent = 'סמל: ' + symLabel(o.symbol);
       }
@@ -1355,7 +1351,7 @@
       const fo = canvas.getActiveObject();
       if (!fo) return false;
       const A = surf().areaMm, s = nudgeStep();
-      if (dir === 'center') fo.left = A.w / 2;
+      if (dir === 'center') { fo.left = A.w / 2; fo.top = A.h / 2; }
       else if (dir === 'left') fo.left -= s;
       else if (dir === 'right') fo.left += s;
       else if (dir === 'up') fo.top -= s;
@@ -1370,6 +1366,24 @@
       for (const b of all('[data-nudge]')) holdRepeat(b, () => nudge(b.dataset.nudge), () => { const fo = canvas.getActiveObject(); if (fo) commitMove(fo); });
       for (const b of all('[data-size]')) holdRepeat(b, () => resizeStep(b.dataset.size === 'up' ? 1.1 : 1 / 1.1), () => afterChange(true));
       E.pinchHint.hidden = !COARSE;
+      // desktop: drag the font strip sideways with the mouse
+      (function () {
+        const strip = E.fontChips;
+        let down = false, moved = false, sx = 0, sl = 0;
+        strip.addEventListener('mousedown', e => { down = true; moved = false; sx = e.pageX; sl = strip.scrollLeft; });
+        window.addEventListener('mousemove', e => {
+          if (!down) return;
+          const dx = e.pageX - sx;
+          if (!moved && Math.abs(dx) < 5) return;
+          moved = true;
+          strip.classList.add('dhe-dragging');
+          strip.scrollLeft = sl - dx;
+        });
+        window.addEventListener('mouseup', () => {
+          down = false;
+          if (moved) setTimeout(() => strip.classList.remove('dhe-dragging'), 0);
+        });
+      }());
       E.btnAddText.addEventListener('click', addText);
       E.btnAddSym.addEventListener('click', () => {
         E.symPanel.hidden = !E.symPanel.hidden;
@@ -1383,16 +1397,6 @@
       E.btnEditTxt.addEventListener('click', () => startEdit(activeModel()));
       E.tDelete.addEventListener('click', deleteActive);
       E.sDelete.addEventListener('click', deleteActive);
-      for (const b of E.alignSeg.children) {
-        b.addEventListener('click', () => {
-          const o = activeModel();
-          if (!o || o.type !== 'text') return;
-          o.align = b.dataset.align;
-          placeObject(o, { select: true });
-          syncPanel(false);
-          afterChange(true);
-        });
-      }
       E.btnSave.addEventListener('click', save);
       E.btnForMe.addEventListener('click', () => ctx.onClose());
       if (E.btnReset) E.btnReset.addEventListener('click', () => {

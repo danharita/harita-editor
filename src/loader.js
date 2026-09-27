@@ -147,7 +147,7 @@
       var old = labelEl ? labelEl.textContent : '';
       if (labelEl) labelEl.textContent = 'טוען את העורך…';
       var s = document.createElement('script');
-      s.src = BASE + 'editor.js';
+      s.src = BASE + 'editor.js?v=' + VER;
       s.onload = function () {
         btn.disabled = false;
         if (labelEl) labelEl.textContent = old;
