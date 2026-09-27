@@ -352,7 +352,10 @@
   const nudgeRow = () => '<div class="dhe-nudge" role="group" aria-label="הזזה"><span class="dhe-nudge-label">הזזה</span>' +
     ['right', 'up', 'down', 'left'].map(d => `<button type="button" data-nudge="${d}" aria-label="הזזה ${NAMES[d]}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="${ARROW[d]}"/></svg></button>`).join('') +
     '<button type="button" data-nudge="center" class="wide">למרכז</button></div>';
-  const stepper = () => '<div class="dhe-stepper" aria-label="גודל"><button type="button" data-size="down" aria-label="הקטנה">−</button><output></output><button type="button" data-size="up" aria-label="הגדלה">+</button></div>';
+  const sizeControl = () => '<div class="dhe-size" role="group" aria-label="גודל">' +
+    '<button type="button" data-size="down" aria-label="הקטנה">−</button>' +
+    '<span class="dhe-size-label">גודל</span>' +
+    '<button type="button" data-size="up" aria-label="הגדלה">+</button></div>';
 
   function editorHtml(test) {
     return `
@@ -375,9 +378,9 @@
       </div>
       <div class="dhe-loading" data-el="loading">טוען את העורך…</div>
     </div>
-    <div class="dhe-readout"><span data-el="areaInfo"></span><span data-el="selInfo"></span></div>
+    <div class="dhe-readout"><span data-el="selInfo"></span></div>
     <div class="dhe-quick" data-el="quick" hidden>
-      <span class="dhe-quick-label">גודל</span>${stepper()}
+      ${sizeControl()}
       <span class="dhe-fine" data-el="pinchHint" hidden>אפשר גם לצבוט בשתי אצבעות על התמונה</span>
     </div>
   </div>
@@ -397,14 +400,14 @@
       <button class="dhe-btn danger" data-el="tDelete" type="button">מחיקה</button>
     </div>
     <div class="dhe-fonts" data-el="fontChips" role="group" aria-label="גופן"></div>
-    <div class="dhe-row">${stepper()}
+    <div class="dhe-row">
       <div class="dhe-seg" data-el="alignSeg" role="group" aria-label="יישור"><button type="button" data-align="right">ימין</button><button type="button" data-align="center">מרכז</button><button type="button" data-align="left">שמאל</button></div>
     </div>
     ${nudgeRow()}
   </section>
   <section class="dhe-panel" data-el="panelSym" hidden>
     <h2 data-el="symTitle">סמל</h2>
-    <div class="dhe-row">${stepper()}<button class="dhe-btn danger" data-el="sDelete" type="button">מחיקה</button></div>
+    <div class="dhe-row"><button class="dhe-btn danger" data-el="sDelete" type="button">מחיקה</button></div>
     ${nudgeRow()}
   </section>
   <div class="dhe-issues" data-el="issues" hidden aria-live="polite"></div>
@@ -593,7 +596,6 @@
       lastWidth = 0;
       fitStage();
       for (const o of cur().objects) placeObject(o);
-      E.areaInfo.innerHTML = `אזור החריטה: רוחב <strong>${s.areaMm.w}</strong> · גובה <strong>${s.areaMm.h}</strong> מ״מ`;
       renderTabs();
       syncPanel(true);
     }
@@ -884,32 +886,24 @@
       E.panelText.hidden = !(o && o.type === 'text');
       E.panelSym.hidden = !(o && o.type === 'symbol');
       if (!o) { editId = null; updateReadout(); return; }
-      let sizeText;
       if (o.type === 'text') {
         if (reset || editId !== o.id) buildFontChips(o); else updateFontChips(o);
-        const lay = layoutFor(o);
-        sizeText = lay.polys.length ? `גובה אות ${fmt(lay.letterHeightMm)} מ״מ` : `גופן ${fmt(o.sizeMm)} מ״מ`;
         for (const b of E.alignSeg.children) b.setAttribute('aria-pressed', String(b.dataset.align === o.align));
       } else {
         E.symTitle.textContent = 'סמל: ' + symLabel(o.symbol);
-        sizeText = `רוחב ${fmt(o.widthMm)} מ״מ`;
       }
-      for (const out of all('.dhe-stepper output')) out.textContent = sizeText;
       editId = o.id;
       updateReadout();
     }
 
+    // The only measurement the customer sees: the engraved letter height.
     function updateReadout(liveScale) {
       const fo = canvas && canvas.getActiveObject();
       const o = fo ? findObj(fo.dhId) : null;
-      if (!o) { E.selInfo.textContent = ''; return; }
-      const sc = liveScale || 1;
-      const w = fo.width * (liveScale || fo.scaleX), h = fo.height * (liveScale || fo.scaleY);
-      if (o.type === 'text') {
-        if (fo.dhEmpty) { E.selInfo.textContent = 'תיבת טקסט ריקה'; return; }
-        E.selInfo.innerHTML = `גובה אות <strong>${fmt(layoutFor(o).letterHeightMm * sc)} מ״מ</strong> · רוחב ${fmt(w)} · גובה ${fmt(h)} מ״מ`;
+      if (o && o.type === 'text' && !fo.dhEmpty) {
+        E.selInfo.innerHTML = `גובה אות <strong>${fmt(layoutFor(o).letterHeightMm * (liveScale || 1))} מ״מ</strong>`;
       } else {
-        E.selInfo.innerHTML = `${escHtml(symLabel(o.symbol))} · רוחב <strong>${fmt(w)}</strong> · גובה <strong>${fmt(h)}</strong> מ״מ`;
+        E.selInfo.textContent = '';
       }
     }
 

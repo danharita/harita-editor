@@ -47,11 +47,15 @@
 .dhe .dhe-stage canvas { max-width: none !important; max-height: none !important; }
 .dhe .dhe-loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font-weight: 600;
   background: var(--stage); text-align: center; padding: 16px; z-index: 2; }
-.dhe .dhe-readout { width: 100%; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+.dhe .dhe-readout { width: 100%; display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; font-size: 13px; color: var(--muted); min-height: 18px; }
 .dhe .dhe-readout strong { color: var(--ink); font-weight: 600; }
 
-.dhe .dhe-quick { width: 100%; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.dhe .dhe-quick-label { font-size: 13px; font-weight: 600; color: var(--muted); }
+.dhe .dhe-quick { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.dhe .dhe-size { display: inline-flex; align-items: stretch; border: 2px solid var(--accent); border-radius: 12px; overflow: hidden; background: var(--surface); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.dhe .dhe-size button { width: 60px; min-height: 52px; border: 0; background: var(--accent-soft); color: var(--accent); font-size: 30px; font-weight: 700; line-height: 1; padding: 0;
+  touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.dhe .dhe-size button:active { background: var(--accent); color: var(--accent-ink); }
+.dhe .dhe-size-label { display: inline-flex; align-items: center; justify-content: center; min-width: 96px; padding: 0 14px; font-size: 18px; font-weight: 700; color: var(--ink); }
 .dhe .dhe-fine { color: var(--muted); font-size: 13px; }
 
 .dhe .dhe-toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
