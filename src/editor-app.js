@@ -366,6 +366,11 @@
     '<button type="button" data-size="down" aria-label="הקטנה">−</button>' +
     '<span class="dhe-size-label">גודל</span>' +
     '<button type="button" data-size="up" aria-label="הגדלה">+</button></div>';
+  // A gentle size slider, shown on touch devices under the fonts.
+  const sizeSlider = () => '<div class="dhe-slider" role="group" aria-label="גודל">' +
+    '<span class="dhe-slider-cap" aria-hidden="true">קטן</span>' +
+    '<input type="range" class="dhe-sizeslider" min="2" max="40" step="0.5" aria-label="גודל">' +
+    '<span class="dhe-slider-cap" aria-hidden="true">גדול</span></div>';
 
   function editorHtml(test) {
     return `
@@ -410,11 +415,13 @@
       <button class="dhe-btn danger" data-el="tDelete" type="button">מחיקה</button>
     </div>
     <div class="dhe-fonts" data-el="fontChips" role="group" aria-label="גופן"></div>
+    ${sizeSlider()}
     ${nudgeRow()}
   </section>
   <section class="dhe-panel" data-el="panelSym" hidden>
     <h2 data-el="symTitle">סמל</h2>
     <div class="dhe-row"><button class="dhe-btn danger" data-el="sDelete" type="button">מחיקה</button></div>
+    ${sizeSlider()}
     ${nudgeRow()}
   </section>
   <div class="dhe-issues" data-el="issues" hidden aria-live="polite"></div>
@@ -665,43 +672,28 @@
         drag = null;
         tapT = null;
         if (opt.target) {
-          // Fabric moves/resizes it itself; remember the start so a tap with
-          // no movement can open the text for writing (touch only)
+          // pressing on the object's own box — Fabric moves/resizes it itself;
+          // remember the start so a tap with no movement can open the text
           tapT = { fo: opt.target, ox: opt.target.left, oy: opt.target.top };
           return;
         }
-        const p = canvas.getPointer(opt.e);
-        const near = nearestObject(p, 24 / k);
-        const active = canvas.getActiveObject();
-        const fo = near || active;
-        if (!fo) return;
-        if (fo !== active) canvas.setActiveObject(fo);
-        drag = { fo, picked: !!near, sx: p.x, sy: p.y, ox: fo.left, oy: fo.top, moved: false };
-      });
-      canvas.on('mouse:move', opt => {
-        if (!drag) return;
-        const p = canvas.getPointer(opt.e);
-        const dx = p.x - drag.sx, dy = p.y - drag.sy;
-        if (!drag.moved && Math.hypot(dx, dy) * k < 5) return;
-        drag.moved = true;
-        drag.fo.left = drag.ox + dx;
-        drag.fo.top = drag.oy + dy;
-        snapClamp(drag.fo);
-        updateReadout();
-        canvas.requestRenderAll();
+        // pressed off every object's box: do NOT grab a nearby object and drag
+        // it. On touch, a tap close to a text still opens it for writing;
+        // otherwise the press just clears the selection.
+        const near = COARSE ? nearestObject(canvas.getPointer(opt.e), 22 / k) : null;
+        if (near) { canvas.setActiveObject(near); tapT = { fo: near, ox: near.left, oy: near.top, near: true }; }
+        else canvas.discardActiveObject();
       });
       const tapToEdit = fo => {
         const o = findObj(fo.dhId);
         if (o && o.type === 'text') startEdit(o);
       };
       canvas.on('mouse:up', () => {
-        const d = drag, t = tapT;
+        const t = tapT;
         drag = null;
         tapT = null;
-        if (d && d.moved) commitMove(d.fo);
-        else if (d && d.picked && COARSE) tapToEdit(d.fo);   // touch: tap near a text edits it
-        else if (d && !d.picked) canvas.discardActiveObject();
-        else if (COARSE && t && Math.hypot(t.fo.left - t.ox, t.fo.top - t.oy) * k < 3) tapToEdit(t.fo);
+        // a tap (no real move) on/near a text opens it for writing (touch)
+        if (t && COARSE && Math.hypot(t.fo.left - t.ox, t.fo.top - t.oy) * k < 3) tapToEdit(t.fo);
         if (guides.v || guides.h) guides.v = guides.h = false;
         canvas.requestRenderAll();
       });
@@ -898,6 +890,7 @@
       E.panelEmpty.hidden = !!o;
       E.panelText.hidden = !(o && o.type === 'text');
       E.panelSym.hidden = !(o && o.type === 'symbol');
+      syncSliders(o);
       if (!o) { editId = null; updateReadout(); return; }
       if (o.type === 'text') {
         if (reset || editId !== o.id) buildFontChips(o); else updateFontChips(o);
@@ -982,6 +975,36 @@
       canvas.requestRenderAll();
       syncPanel(true);
       afterChange(true);
+    }
+
+    // Reflect the active object's size on the slider(s), with a range that fits
+    // the current surface. Symbols use width, text uses font size.
+    function syncSliders(o) {
+      const s = surf();
+      for (const sl of all('.dhe-sizeslider')) {
+        if (!o) { sl.disabled = true; continue; }
+        sl.disabled = false;
+        if (o.type === 'text') { sl.min = 2; sl.max = Math.max(10, Math.round(s.defaultTextMm * 3)); sl.value = o.sizeMm; }
+        else { sl.min = 3; sl.max = Math.max(10, Math.round(s.areaMm.w * 0.9)); sl.value = o.widthMm; }
+      }
+    }
+
+    function sliderResize(sl, commit) {
+      const o = activeModel();
+      if (!o) return;
+      const key = o.type === 'text' ? 'sizeMm' : 'widthMm';
+      const v = round2(Number(sl.value));
+      if (!(v > 0)) return;
+      o[key] = v;
+      if (o.type === 'text') o.prefSizeMm = v;
+      placeObject(o, { select: true });
+      if (o.type === 'text') o.prefSizeMm = o.sizeMm;
+      // reflect the actual (possibly shrunk-to-fit) size back onto the slider
+      sl.value = o[key];
+      updateReadout();
+      renderIssues(validate());
+      canvas.requestRenderAll();
+      if (commit) afterChange(true);
     }
 
     function resizeStep(f) {
@@ -1422,6 +1445,10 @@
     function wire() {
       for (const b of all('[data-nudge]')) holdRepeat(b, () => nudge(b.dataset.nudge), () => { const fo = canvas.getActiveObject(); if (fo) commitMove(fo); });
       for (const b of all('[data-size]')) holdRepeat(b, () => resizeStep(b.dataset.size === 'up' ? 1.1 : 1 / 1.1), () => afterChange(true));
+      for (const sl of all('.dhe-sizeslider')) {
+        sl.addEventListener('input', () => sliderResize(sl, false));
+        sl.addEventListener('change', () => sliderResize(sl, true));
+      }
       E.pinchHint.hidden = !COARSE;
       // desktop: drag the font strip sideways with the mouse
       (function () {
