@@ -366,11 +366,9 @@
     '<button type="button" data-size="down" aria-label="הקטנה">−</button>' +
     '<span class="dhe-size-label">גודל</span>' +
     '<button type="button" data-size="up" aria-label="הגדלה">+</button></div>';
-  // A gentle size slider, shown on touch devices under the fonts.
-  const sizeSlider = () => '<div class="dhe-slider" role="group" aria-label="גודל">' +
-    '<span class="dhe-slider-cap" aria-hidden="true">קטן</span>' +
-    '<input type="range" class="dhe-sizeslider" min="2" max="40" step="0.5" aria-label="גודל">' +
-    '<span class="dhe-slider-cap" aria-hidden="true">גדול</span></div>';
+  // A gentle scrollbar under the font rows, so it's clear there are more fonts
+  // to scroll through, and you can drag it to move through them.
+  const fontScrollBar = () => '<div class="dhe-fontscroll" data-el="fontScroll" aria-hidden="true"><span class="dhe-fontscroll-thumb" data-el="fontScrollThumb"></span></div>';
 
   function editorHtml(test) {
     return `
@@ -415,13 +413,12 @@
       <button class="dhe-btn danger" data-el="tDelete" type="button">מחיקה</button>
     </div>
     <div class="dhe-fonts" data-el="fontChips" role="group" aria-label="גופן"></div>
-    ${sizeSlider()}
+    ${fontScrollBar()}
     ${nudgeRow()}
   </section>
   <section class="dhe-panel" data-el="panelSym" hidden>
     <h2 data-el="symTitle">סמל</h2>
     <div class="dhe-row"><button class="dhe-btn danger" data-el="sDelete" type="button">מחיקה</button></div>
-    ${sizeSlider()}
     ${nudgeRow()}
   </section>
   <div class="dhe-issues" data-el="issues" hidden aria-live="polite"></div>
@@ -860,6 +857,8 @@
       updateFontChips(o);
       const on = E.fontChips.querySelector(`[data-font="${o.font}"]`);
       if (on) on.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      syncFontScroll();
+      requestAnimationFrame(syncFontScroll);
     }
 
     function updateFontChips(o) {
@@ -890,7 +889,6 @@
       E.panelEmpty.hidden = !!o;
       E.panelText.hidden = !(o && o.type === 'text');
       E.panelSym.hidden = !(o && o.type === 'symbol');
-      syncSliders(o);
       if (!o) { editId = null; updateReadout(); return; }
       if (o.type === 'text') {
         if (reset || editId !== o.id) buildFontChips(o); else updateFontChips(o);
@@ -977,34 +975,19 @@
       afterChange(true);
     }
 
-    // Reflect the active object's size on the slider(s), with a range that fits
-    // the current surface. Symbols use width, text uses font size.
-    function syncSliders(o) {
-      const s = surf();
-      for (const sl of all('.dhe-sizeslider')) {
-        if (!o) { sl.disabled = true; continue; }
-        sl.disabled = false;
-        if (o.type === 'text') { sl.min = 2; sl.max = Math.max(10, Math.round(s.defaultTextMm * 3)); sl.value = o.sizeMm; }
-        else { sl.min = 3; sl.max = Math.max(10, Math.round(s.areaMm.w * 0.9)); sl.value = o.widthMm; }
-      }
+    // The gentle scrollbar under the fonts: reflect the font strip's scroll and
+    // let the customer drag it. Always visible, so it's clear there are more
+    // fonts to scroll through.
+    function fontScrollState() {
+      const el = E.fontChips, max = el.scrollWidth - el.clientWidth;
+      return { max, frac: max <= 1 ? 0 : Math.min(1, Math.abs(el.scrollLeft) / max), ratio: el.clientWidth / (el.scrollWidth || 1) };
     }
-
-    function sliderResize(sl, commit) {
-      const o = activeModel();
-      if (!o) return;
-      const key = o.type === 'text' ? 'sizeMm' : 'widthMm';
-      const v = round2(Number(sl.value));
-      if (!(v > 0)) return;
-      o[key] = v;
-      if (o.type === 'text') o.prefSizeMm = v;
-      placeObject(o, { select: true });
-      if (o.type === 'text') o.prefSizeMm = o.sizeMm;
-      // reflect the actual (possibly shrunk-to-fit) size back onto the slider
-      sl.value = o[key];
-      updateReadout();
-      renderIssues(validate());
-      canvas.requestRenderAll();
-      if (commit) afterChange(true);
+    function syncFontScroll() {
+      const t = E.fontScrollThumb; if (!t) return;
+      const { frac, ratio } = fontScrollState();
+      const w = Math.min(100, Math.max(16, ratio * 100));
+      t.style.width = w + '%';
+      t.style.insetInlineStart = (frac * (100 - w)) + '%';
     }
 
     function resizeStep(f) {
@@ -1445,10 +1428,29 @@
     function wire() {
       for (const b of all('[data-nudge]')) holdRepeat(b, () => nudge(b.dataset.nudge), () => { const fo = canvas.getActiveObject(); if (fo) commitMove(fo); });
       for (const b of all('[data-size]')) holdRepeat(b, () => resizeStep(b.dataset.size === 'up' ? 1.1 : 1 / 1.1), () => afterChange(true));
-      for (const sl of all('.dhe-sizeslider')) {
-        sl.addEventListener('input', () => sliderResize(sl, false));
-        sl.addEventListener('change', () => sliderResize(sl, true));
-      }
+      // gentle font scrollbar: reflect the strip's scroll and drag it to move
+      E.fontChips.addEventListener('scroll', syncFontScroll, { passive: true });
+      window.addEventListener('resize', syncFontScroll);
+      (function () {
+        const thumb = E.fontScrollThumb, track = E.fontScroll;
+        if (!thumb || !track) return;
+        let dragging = false, startX = 0, startFrac = 0;
+        thumb.addEventListener('pointerdown', e => {
+          dragging = true; startX = e.clientX; startFrac = fontScrollState().frac;
+          try { thumb.setPointerCapture(e.pointerId); } catch (x) { /* ignore */ }
+          e.preventDefault();
+        });
+        thumb.addEventListener('pointermove', e => {
+          if (!dragging) return;
+          const travel = track.clientWidth - thumb.clientWidth, st = fontScrollState();
+          if (travel <= 0 || st.max <= 0) return;
+          const rtl = getComputedStyle(track).direction === 'rtl' ? -1 : 1;
+          const frac = Math.min(1, Math.max(0, startFrac + rtl * (e.clientX - startX) / travel));
+          E.fontChips.scrollLeft = rtl * frac * st.max;
+          syncFontScroll();
+        });
+        for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) thumb.addEventListener(ev, () => { dragging = false; });
+      }());
       E.pinchHint.hidden = !COARSE;
       // desktop: drag the font strip sideways with the mouse
       (function () {

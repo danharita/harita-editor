@@ -71,18 +71,14 @@
 .dhe .dhe-edit textarea::placeholder { color: #8d857a; }
 .dhe .dhe-edit button { width: 46px; min-height: 46px; border: 0; border-radius: 10px; background: var(--accent); color: var(--accent-ink);
   font-size: 20px; font-weight: 700; padding: 0; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22); }
-.dhe .dhe-fonts { display: grid; gap: 8px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: thin; -webkit-overflow-scrolling: touch; }
+.dhe .dhe-fonts { display: grid; gap: 8px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.dhe .dhe-fonts::-webkit-scrollbar { display: none; }
 .dhe .dhe-fonts.dhe-dragging { cursor: grabbing; }
 .dhe .dhe-fonts.dhe-dragging .dhe-chip { pointer-events: none; }
-/* gentle size slider — shown on touch devices, under the fonts */
-.dhe .dhe-slider { display: none; align-items: center; gap: 10px; width: 100%; padding: 2px 2px 0; }
-@media (pointer: coarse) { .dhe .dhe-slider { display: flex; } }
-.dhe .dhe-slider-cap { font-size: 12px; font-weight: 600; color: var(--muted); flex: none; }
-.dhe .dhe-sizeslider { flex: 1; -webkit-appearance: none; appearance: none; height: 6px; border-radius: 999px; background: var(--accent-soft); outline: none; margin: 12px 0; }
-.dhe .dhe-sizeslider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 28px; height: 28px; border-radius: 50%; background: var(--accent); border: 3px solid var(--surface); box-shadow: 0 1px 4px rgba(0,0,0,.28); cursor: pointer; }
-.dhe .dhe-sizeslider::-moz-range-thumb { width: 28px; height: 28px; border-radius: 50%; background: var(--accent); border: 3px solid var(--surface); box-shadow: 0 1px 4px rgba(0,0,0,.28); cursor: pointer; }
-.dhe .dhe-sizeslider::-moz-range-track { height: 6px; border-radius: 999px; background: var(--accent-soft); }
-.dhe .dhe-sizeslider:disabled { opacity: .45; }
+/* gentle, always-visible scrollbar under the fonts (shows there are more) */
+.dhe .dhe-fontscroll { position: relative; height: 8px; border-radius: 999px; background: var(--accent-soft); margin: 4px 2px 0; }
+.dhe .dhe-fontscroll-thumb { position: absolute; top: 0; height: 100%; min-width: 16%; border-radius: 999px; background: var(--accent); opacity: .82; cursor: grab; touch-action: none; }
+.dhe .dhe-fontscroll-thumb:active { cursor: grabbing; opacity: 1; }
 .dhe .dhe-font-row { display: flex; gap: 8px; width: max-content; }
 .dhe .dhe-chip { flex: 0 0 96px; min-height: 52px; border: 1px solid var(--line); border-radius: 10px;
   background: var(--surface-2); padding: 5px 8px; display: grid; gap: 1px; text-align: center; cursor: pointer; }
