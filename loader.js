@@ -9,8 +9,8 @@
  */
 (function () {
   'use strict';
-  var BASE = 'https://danharita.github.io/custom-fonts/editor/';
-  var VER = '202609271348';           // גרסת הטוען (לבדיקה בקונסול: DHEditorLoader)
+  var BASE = 'https://danharita.github.io/harita-editor/';
+  var VER = '202609271434';           // גרסת הטוען (לבדיקה בקונסול: DHEditorLoader)
   var LIVE = false;              // true = מוצג לכל הלקוחות
   var PREFIX = 'engrave-bg-';
   var TEST_KEY = 'dh-editor-test';
