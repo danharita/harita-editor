@@ -827,6 +827,9 @@
 
     function buildFontChips(o) {
       E.fontChips.innerHTML = '';
+      const rowHe = document.createElement('div'); rowHe.className = 'dhe-font-row';
+      const rowEn = document.createElement('div'); rowEn.className = 'dhe-font-row';
+      E.fontChips.append(rowHe, rowEn);   // Hebrew on top, English below
       for (const f of FONTS) {
         const b = document.createElement('button');
         b.type = 'button';
@@ -850,7 +853,7 @@
           syncPanel(false);
           afterChange(true);
         });
-        E.fontChips.appendChild(b);
+        (/^en/.test(f.id) ? rowEn : rowHe).appendChild(b);
       }
       updateFontChips(o);
       const on = E.fontChips.querySelector(`[data-font="${o.font}"]`);
@@ -860,16 +863,19 @@
     function updateFontChips(o) {
       if (!o || o.type !== 'text') return;
       const line = (o.text.split('\n').find(l => l.trim()) || '').trim();
-      const sample = [...(line || 'אבג abc')].slice(0, 14).join('');
+      const heChars = [...line].filter(c => /[֐-׿]/.test(c));
+      const enChars = [...line].filter(c => /[A-Za-z]/.test(c));
+      const heSample = (heChars.length ? heChars : [...'אבג']).slice(0, 12).join('');
+      const enSample = (enChars.length ? enChars : [...'Abc']).slice(0, 12).join('');
       const clean = EE.cleanText(o.text);
-      for (const b of E.fontChips.children) {
+      for (const b of E.fontChips.querySelectorAll('.dhe-chip')) {
         const f = FONTS.find(x => x.id === b.dataset.font);
         const loaded = EE.hasFont(f.id);
         const miss = loaded && EE.checkChars(clean, EE.getFont(f.id)).missing.length > 0;
         b.classList.toggle('warn', miss);
         b.classList.toggle('loading', !loaded);
         b.setAttribute('aria-pressed', String(o.font === f.id));
-        b.querySelector('.sample').textContent = sample;
+        b.querySelector('.sample').textContent = /^en/.test(f.id) ? enSample : heSample;
         b.querySelector('.name').textContent = miss ? f.label + ' · חסרות אותיות' : f.label;
         b.title = miss ? 'בגופן הזה חסרות חלק מהאותיות שכתבתם' : f.label;
       }
