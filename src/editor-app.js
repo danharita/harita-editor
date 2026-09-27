@@ -979,8 +979,13 @@
     // let the customer drag it. Always visible, so it's clear there are more
     // fonts to scroll through.
     function fontScrollState() {
-      const el = E.fontChips, max = el.scrollWidth - el.clientWidth;
-      return { max, frac: max <= 1 ? 0 : Math.min(1, Math.abs(el.scrollLeft) / max), ratio: el.clientWidth / (el.scrollWidth || 1) };
+      const el = E.fontChips;
+      // Cap to the NARROWER row so you can't scroll past the last chip into
+      // blank space (the Hebrew and English rows differ a little in width).
+      let content = el.scrollWidth || 1;
+      for (const r of el.querySelectorAll('.dhe-font-row')) if (r.scrollWidth) content = Math.min(content, r.scrollWidth);
+      const max = Math.max(0, content - el.clientWidth);
+      return { max, frac: max <= 1 ? 0 : Math.min(1, Math.abs(el.scrollLeft) / max), ratio: el.clientWidth / content };
     }
     function syncFontScroll() {
       const t = E.fontScrollThumb; if (!t) return;
@@ -1429,7 +1434,14 @@
       for (const b of all('[data-nudge]')) holdRepeat(b, () => nudge(b.dataset.nudge), () => { const fo = canvas.getActiveObject(); if (fo) commitMove(fo); });
       for (const b of all('[data-size]')) holdRepeat(b, () => resizeStep(b.dataset.size === 'up' ? 1.1 : 1 / 1.1), () => afterChange(true));
       // gentle font scrollbar: reflect the strip's scroll and drag it to move
-      E.fontChips.addEventListener('scroll', syncFontScroll, { passive: true });
+      E.fontChips.addEventListener('scroll', () => {
+        const st = fontScrollState();
+        if (st.max > 0 && Math.abs(E.fontChips.scrollLeft) > st.max + 1) {
+          const rtl = getComputedStyle(E.fontChips).direction === 'rtl' ? -1 : 1;
+          E.fontChips.scrollLeft = rtl * st.max;
+        }
+        syncFontScroll();
+      }, { passive: true });
       window.addEventListener('resize', syncFontScroll);
       (function () {
         const thumb = E.fontScrollThumb, track = E.fontScroll;

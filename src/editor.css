@@ -76,9 +76,9 @@
 .dhe .dhe-fonts.dhe-dragging { cursor: grabbing; }
 .dhe .dhe-fonts.dhe-dragging .dhe-chip { pointer-events: none; }
 /* gentle, always-visible scrollbar under the fonts (shows there are more) */
-.dhe .dhe-fontscroll { position: relative; height: 8px; border-radius: 999px; background: var(--accent-soft); margin: 4px 2px 0; }
-.dhe .dhe-fontscroll-thumb { position: absolute; top: 0; height: 100%; min-width: 16%; border-radius: 999px; background: var(--accent); opacity: .82; cursor: grab; touch-action: none; }
-.dhe .dhe-fontscroll-thumb:active { cursor: grabbing; opacity: 1; }
+.dhe .dhe-fontscroll { position: relative; height: 4px; border-radius: 999px; background: var(--accent-soft); margin: 6px 6px 0; }
+.dhe .dhe-fontscroll-thumb { position: absolute; top: 0; height: 100%; min-width: 20%; border-radius: 999px; background: var(--accent); opacity: .5; cursor: grab; touch-action: none; }
+.dhe .dhe-fontscroll-thumb:active { cursor: grabbing; opacity: .75; }
 .dhe .dhe-font-row { display: flex; gap: 8px; width: max-content; }
 .dhe .dhe-chip { flex: 0 0 96px; min-height: 52px; border: 1px solid var(--line); border-radius: 10px;
   background: var(--surface-2); padding: 5px 8px; display: grid; gap: 1px; text-align: center; cursor: pointer; }
