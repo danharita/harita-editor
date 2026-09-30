@@ -1377,6 +1377,20 @@
       + (res && res.view ? ` · ${res.view}` : '')
       + (test ? ' · בדיקה' : '');
 
+    // Remember the saved code in the browser so the site-wide widget can link
+    // it to the order number once the customer reaches the payment page. Same
+    // origin as the rest of the site, so localStorage is shared.
+    const LINK_KEY = 'dh-link-pending';
+    function rememberForOrderLink(code) {
+      try {
+        let arr = JSON.parse(localStorage.getItem(LINK_KEY) || '[]');
+        const now = Date.now();
+        arr = (Array.isArray(arr) ? arr : []).filter(x => x && x.code !== code && (now - (x.t || 0)) < 24 * 3600e3);
+        arr.push({ code, t: now });
+        localStorage.setItem(LINK_KEY, JSON.stringify(arr.slice(-20)));
+      } catch (e) { /* storage unavailable */ }
+    }
+
     let saving = false;
     async function save() {
       if (saving) return;
@@ -1425,6 +1439,7 @@
         savedSnap = designSnap();
         savedId = finalId;
         bridge.setDesignField(designFieldText(finalId, res));
+        rememberForOrderLink(finalId);
         saveDraft();
         updateStatus();
         toast('העיצוב נשמר');
