@@ -389,13 +389,7 @@
     <button class="dhe-btn" data-el="btnForMe" type="button">עצבו בשבילי</button>
     <span class="grow"></span>
     ${test ? '<span class="dhe-test">מצב בדיקה</span>' : ''}
-    <button class="dhe-btn primary" data-el="btnSave" type="button">אישור סופי של העיצוב</button>
   </div>
-  <label class="dhe-confirm" data-el="confirmRow">
-    <input type="checkbox" data-el="confirmChk">
-    <span>אני מאשר/ת שזהו העיצוב הסופי לחריטה — הטקסט, האיות, הגופן והמיקום נכונים. העיצוב ייחרט בדיוק כפי שהוא נראה כאן, ולא תישלח סקיצה נוספת לאישור.</span>
-  </label>
-  <div class="dhe-status" data-el="status" aria-live="polite" hidden></div>
   <div class="dhe-tabs" role="tablist" data-el="tabs" aria-label="פריט"></div>
   <div class="dhe-stage-wrap" data-el="stageWrap">
     <div class="dhe-stage" data-el="stage">
@@ -439,6 +433,11 @@
     ${nudgeRow()}
   </section>
   <div class="dhe-issues" data-el="issues" hidden aria-live="polite"></div>
+  <div class="dhe-save">
+    <button class="dhe-btn primary dhe-save-btn" data-el="btnSave" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg><span>אישור סופי של העיצוב</span></button>
+    <p class="dhe-save-note">בלחיצה על הכפתור אני מאשר/ת שזהו העיצוב הסופי לחריטה — הטקסט, האיות, הגופן והמיקום נכונים, והוא ייחרט בדיוק כפי שהוא נראה כאן, ללא סקיצה נוספת לאישור.</p>
+    <div class="dhe-status" data-el="status" aria-live="polite" hidden></div>
+  </div>
   ${test ? `<details class="dhe-settings">
     <summary>הגדרות בדיקה</summary>
     <div class="body">
@@ -823,12 +822,11 @@
       E.tabs.hidden = SURFACES.length < 2;
       E.tabs.innerHTML = '';
       for (const s of SURFACES) {
-        const n = state.surfaces[s.key].objects.filter(o => o.type !== 'text' || o.text.trim()).length;
         const b = document.createElement('button');
         b.type = 'button';
         b.setAttribute('role', 'tab');
         b.setAttribute('aria-selected', String(s.key === state.current));
-        b.innerHTML = `${escHtml(s.label)} <span class="count">· ${n}</span>`;
+        b.textContent = s.label;
         b.addEventListener('click', () => {
           if (s.key === state.current) return;
           state.current = s.key;
@@ -1195,9 +1193,6 @@
       updateStatus();
       canvas.requestRenderAll();
       scheduleSync();
-      // Any real change means the current design is no longer the one the
-      // customer approved, so the final-approval box must be ticked again.
-      if (commit && E.confirmChk) E.confirmChk.checked = false;
       if (commit) pushHistory();
     }
 
@@ -1393,6 +1388,8 @@
       } catch (e) { /* storage unavailable */ }
     }
 
+    function setSaveLabel(t) { const sp = E.btnSave.querySelector('span'); if (sp) sp.textContent = t; else E.btnSave.textContent = t; }
+
     let saving = false;
     async function save() {
       if (saving) return;
@@ -1407,18 +1404,11 @@
         if (!E.issues.hidden) E.issues.scrollIntoView({ behavior: 'smooth', block: 'center' });
         return;
       }
-      // No designer reviews a self-made design, so the customer must actively
-      // confirm this is final before it is committed to the order.
-      if (!E.confirmChk.checked) {
-        toast('יש לאשר את תיבת הסימון: זהו העיצוב הסופי לחריטה');
-        E.confirmRow.classList.add('flash');
-        E.confirmRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        setTimeout(() => E.confirmRow.classList.remove('flash'), 1200);
-        return;
-      }
+      // No designer reviews a self-made design; clicking this button is itself
+      // the final approval (the note next to it says so).
       saving = true;
       E.btnSave.disabled = true;
-      E.btnSave.textContent = 'שומר…';
+      setSaveLabel('שומר…');
       try {
         clearTimeout(syncTimer);
         syncToPage();
@@ -1451,7 +1441,7 @@
       } finally {
         saving = false;
         E.btnSave.disabled = false;
-        E.btnSave.textContent = 'אישור סופי של העיצוב';
+        setSaveLabel('אישור סופי של העיצוב');
       }
     }
 

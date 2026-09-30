@@ -29,11 +29,11 @@
 
 .dhe .dhe-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .dhe .dhe-bar .grow { flex: 1; min-width: 0; }
-.dhe .dhe-confirm { display: flex; gap: 9px; align-items: flex-start; margin: 10px 0 2px; padding: 11px 13px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); font-size: 13.5px; line-height: 1.45; color: var(--ink); cursor: pointer; transition: border-color .15s, background .15s; }
-.dhe .dhe-confirm input { width: 20px; height: 20px; margin: 0; flex: 0 0 auto; accent-color: var(--accent); cursor: pointer; }
-.dhe .dhe-confirm.flash { border-color: #b3261e; background: #fdeceb; animation: dhe-flash .4s ease 2; }
-@keyframes dhe-flash { 50% { border-color: #b3261e; box-shadow: 0 0 0 3px rgba(179,38,30,.15); } }
-.dhe .dhe-status { font-size: 14px; color: var(--muted); font-weight: 600; margin-top: -4px; }
+.dhe .dhe-save { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
+.dhe .dhe-save .dhe-save-btn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 62px; padding: 16px 20px; font-size: 18px; font-weight: 800; border-radius: 14px; box-shadow: 0 4px 16px rgba(143,111,51,.30); }
+.dhe .dhe-save .dhe-save-btn svg { width: 24px; height: 24px; flex: 0 0 auto; }
+.dhe .dhe-save-note { margin: 11px 4px 0; font-size: 13px; line-height: 1.45; color: var(--muted); text-align: center; }
+.dhe .dhe-status { font-size: 14px; color: var(--muted); font-weight: 600; margin-top: 8px; text-align: center; }
 .dhe .dhe-status.ok { color: var(--ok); }
 .dhe .dhe-status.dirty { color: var(--accent); }
 .dhe .dhe-test { font-size: 12px; font-weight: 700; color: var(--accent); background: var(--accent-soft); border-radius: 999px; padding: 2px 9px; }
