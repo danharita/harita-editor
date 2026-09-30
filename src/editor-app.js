@@ -902,6 +902,9 @@
       E.panelEmpty.hidden = !!o;
       E.panelText.hidden = !(o && o.type === 'text');
       E.panelSym.hidden = !(o && o.type === 'symbol');
+      // Selecting/tapping any object collapses the "בחרו סמל" picker grid,
+      // so it doesn't linger over the text panel and confuse the customer.
+      if (o) { E.symPanel.hidden = true; E.btnAddSym.setAttribute('aria-expanded', 'false'); }
       if (!o) { editId = null; updateReadout(); return; }
       if (o.type === 'text') {
         if (reset || editId !== o.id) buildFontChips(o); else updateFontChips(o);
