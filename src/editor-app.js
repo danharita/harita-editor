@@ -82,7 +82,7 @@
     },
     knife: {
       slot: 'knife', label: 'סכין', fileLabel: 'knife',
-      areaMm: { w: 110, h: 24 },
+      areaMm: { w: 72, h: 12 },
       engrave: { color: '#161616', opacity: 0.8, blend: 'multiply' },
       minLetterMm: 2, defaultTextMm: 8,
       limits: { textBoxes: 2, symbols: 2, linesPerBox: 2, charsPerLine: 24 },
@@ -131,9 +131,11 @@
   // (which is keyed by image base name) — needed when two products share an
   // image base like "test". Each entry is a list of surfaces, in order.
   const PRODUCTS_BY_ID = {
+    // Re-measured on Dan's updated photos (30.9). Knife (santoku) is a first
+    // pass — the blade is busy with branding+dimples; fine-tune in the tool.
     '2851248': [
-      { lib: 'board', area: { xPct: 16.5, yPct: 15.0, wPct: 66.5, hPct: 71.3, shape: 'rect' } },
-      { lib: 'knife', area: { xPct: 17.9, yPct: 42.0, wPct: 35.5, hPct: 11.6, shape: 'rect' } },
+      { lib: 'board', area: { xPct: 15.0, yPct: 14.0, wPct: 67.0, hPct: 72.0, shape: 'rect' } },
+      { lib: 'knife', area: { xPct: 14.0, yPct: 29.0, wPct: 24.0, hPct: 12.0, shape: 'rect' } },
     ],
     // Pocketknife: side 1 (blade right), side 2 (blade left, paid upgrade).
     // Areas measured on Dan's photos (first pass — refine with the tool).
