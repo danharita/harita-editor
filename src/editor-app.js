@@ -975,8 +975,10 @@
 
     function addSymbol(sym) {
       const s = surf(), A = s.areaMm;
-      if (cur().objects.filter(o => o.type === 'symbol').length >= s.limits.symbols) { toast(`אפשר עד ${s.limits.symbols} סמלים על ה${s.label}`); return; }
-      if (allObjects().filter(o => o.type === 'symbol').length >= bridge.symbolCap) { toast(`אפשר עד ${bridge.symbolCap} סמלים בהזמנה הזו`); return; }
+      // Symbol limit is per product/surface (so a set gets up to the cap on
+      // each item), not across the whole order.
+      const symCap = Math.min(s.limits.symbols, bridge.symbolCap);
+      if (cur().objects.filter(o => o.type === 'symbol').length >= symCap) { toast(`אפשר עד ${symCap} סמלים על ה${s.label}`); return; }
       const o = { id: uid(), type: 'symbol', symbol: sym.id, widthMm: round2(Math.min(sym.defaultWidthMm, A.h * 0.7)), ...freeSpot(A) };
       cur().objects.push(o);
       placeObject(o, { select: true });
