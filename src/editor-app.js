@@ -389,8 +389,12 @@
     <button class="dhe-btn" data-el="btnForMe" type="button">עצבו בשבילי</button>
     <span class="grow"></span>
     ${test ? '<span class="dhe-test">מצב בדיקה</span>' : ''}
-    <button class="dhe-btn primary" data-el="btnSave" type="button">שמור עיצוב</button>
+    <button class="dhe-btn primary" data-el="btnSave" type="button">אישור סופי של העיצוב</button>
   </div>
+  <label class="dhe-confirm" data-el="confirmRow">
+    <input type="checkbox" data-el="confirmChk">
+    <span>אני מאשר/ת שזהו העיצוב הסופי לחריטה — הטקסט, האיות, הגופן והמיקום נכונים. העיצוב ייחרט בדיוק כפי שהוא נראה כאן, ולא תישלח סקיצה נוספת לאישור.</span>
+  </label>
   <div class="dhe-status" data-el="status" aria-live="polite" hidden></div>
   <div class="dhe-tabs" role="tablist" data-el="tabs" aria-label="פריט"></div>
   <div class="dhe-stage-wrap" data-el="stageWrap">
@@ -1185,6 +1189,9 @@
       updateStatus();
       canvas.requestRenderAll();
       scheduleSync();
+      // Any real change means the current design is no longer the one the
+      // customer approved, so the final-approval box must be ticked again.
+      if (commit && E.confirmChk) E.confirmChk.checked = false;
       if (commit) pushHistory();
     }
 
@@ -1380,6 +1387,15 @@
         if (!E.issues.hidden) E.issues.scrollIntoView({ behavior: 'smooth', block: 'center' });
         return;
       }
+      // No designer reviews a self-made design, so the customer must actively
+      // confirm this is final before it is committed to the order.
+      if (!E.confirmChk.checked) {
+        toast('יש לאשר את תיבת הסימון: זהו העיצוב הסופי לחריטה');
+        E.confirmRow.classList.add('flash');
+        E.confirmRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(() => E.confirmRow.classList.remove('flash'), 1200);
+        return;
+      }
       saving = true;
       E.btnSave.disabled = true;
       E.btnSave.textContent = 'שומר…';
@@ -1414,7 +1430,7 @@
       } finally {
         saving = false;
         E.btnSave.disabled = false;
-        E.btnSave.textContent = 'שמור עיצוב';
+        E.btnSave.textContent = 'אישור סופי של העיצוב';
       }
     }
 

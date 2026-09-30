@@ -29,6 +29,10 @@
 
 .dhe .dhe-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .dhe .dhe-bar .grow { flex: 1; min-width: 0; }
+.dhe .dhe-confirm { display: flex; gap: 9px; align-items: flex-start; margin: 10px 0 2px; padding: 11px 13px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); font-size: 13.5px; line-height: 1.45; color: var(--ink); cursor: pointer; transition: border-color .15s, background .15s; }
+.dhe .dhe-confirm input { width: 20px; height: 20px; margin: 0; flex: 0 0 auto; accent-color: var(--accent); cursor: pointer; }
+.dhe .dhe-confirm.flash { border-color: #b3261e; background: #fdeceb; animation: dhe-flash .4s ease 2; }
+@keyframes dhe-flash { 50% { border-color: #b3261e; box-shadow: 0 0 0 3px rgba(179,38,30,.15); } }
 .dhe .dhe-status { font-size: 14px; color: var(--muted); font-weight: 600; margin-top: -4px; }
 .dhe .dhe-status.ok { color: var(--ok); }
 .dhe .dhe-status.dirty { color: var(--accent); }
