@@ -1179,7 +1179,7 @@
       E.status.classList.remove('ok', 'dirty');
       E.status.hidden = savedSnap === null;
       if (savedSnap === null) { E.status.textContent = ''; return; }
-      if (isSaved()) { E.status.textContent = `העיצוב נשמר · קוד ${savedId}`; E.status.classList.add('ok'); } else { E.status.textContent = 'יש שינויים שלא נשמרו'; E.status.classList.add('dirty'); }
+      if (isSaved()) { E.status.textContent = 'העיצוב נשמר'; E.status.classList.add('ok'); } else { E.status.textContent = 'יש שינויים שלא נשמרו'; E.status.classList.add('dirty'); }
     }
 
     function afterChange(commit) {
@@ -1423,7 +1423,7 @@
         bridge.setDesignField(designFieldText(finalId, res));
         saveDraft();
         updateStatus();
-        toast(`העיצוב נשמר. קוד העיצוב: ${finalId}`);
+        toast('העיצוב נשמר');
       } catch (e) {
         console.error('[DHEditor] save failed', e);
         toast('השמירה לא הצליחה. נסו שוב.');
