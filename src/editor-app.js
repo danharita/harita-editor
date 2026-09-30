@@ -89,6 +89,28 @@
       textFields: ['טקסט לחריטה סכין, שורה 1', 'טקסט לחריטה סכין, שורה 2', 'טקסט לחריטה סכין, שורה 3', 'טקסט לחריטה סכין'],
       danWrap: 'danWrap_1', placeholder: 'knife',
     },
+    // Pocketknife (אולר) — engraving on the flat of the blade. Two sides; the
+    // second is a paid upgrade (see the product config's `gate`). Max 2 lines.
+    olar1: {
+      slot: 'olar1', label: 'צד ראשון', fileLabel: 'side1',
+      areaMm: { w: 45, h: 10 },
+      engrave: { color: '#2b2b2b', opacity: 0.82, blend: 'multiply' },
+      minLetterMm: 2, defaultTextMm: 6,
+      limits: { textBoxes: 2, symbols: 2, linesPerBox: 2, charsPerLine: 22 },
+      textFields: ['טקסט לחריטה שורה 1', 'טקסט לחריטה שורה 2', 'טקסט לחריטה'],
+      placeholder: 'knife',
+    },
+    olar2: {
+      slot: 'olar2', label: 'צד שני', fileLabel: 'side2',
+      areaMm: { w: 45, h: 10 },
+      engrave: { color: '#2b2b2b', opacity: 0.82, blend: 'multiply' },
+      minLetterMm: 2, defaultTextMm: 6,
+      limits: { textBoxes: 2, symbols: 2, linesPerBox: 2, charsPerLine: 22 },
+      textFields: ['טקסט לחריטה צד שני - במידה ושודרג', 'טקסט לחריטה צד שני'],
+      // Paid upgrade: designing this side ticks the site option automatically.
+      gate: { nameIncludes: 'צד השני', yesIncludes: 'כן' },
+      placeholder: 'knife',
+    },
   };
 
   // Products, by the base name of their engrave-bg images. An image named
@@ -103,6 +125,22 @@
       { lib: 'knife', area: { xPct: 17.9, yPct: 42.0, wPct: 35.5, hPct: 11.6, shape: 'rect' } },
     ],
     'mock': ['board', 'knife'],   // local test images: auto-fit the box
+  };
+
+  // Products keyed by their 2all product id (PicID). Preferred over PRODUCTS
+  // (which is keyed by image base name) — needed when two products share an
+  // image base like "test". Each entry is a list of surfaces, in order.
+  const PRODUCTS_BY_ID = {
+    '2851248': [
+      { lib: 'board', area: { xPct: 16.5, yPct: 15.0, wPct: 66.5, hPct: 71.3, shape: 'rect' } },
+      { lib: 'knife', area: { xPct: 17.9, yPct: 42.0, wPct: 35.5, hPct: 11.6, shape: 'rect' } },
+    ],
+    // Pocketknife: side 1 (blade right), side 2 (blade left, paid upgrade).
+    // Areas measured on Dan's photos (first pass — refine with the tool).
+    '3008779': [
+      { lib: 'olar1', area: { xPct: 63.0, yPct: 44.0, wPct: 27.0, hPct: 18.0, shape: 'rect' } },
+      { lib: 'olar2', area: { xPct: 10.0, yPct: 44.0, wPct: 27.0, hPct: 18.0, shape: 'rect' } },
+    ],
   };
 
   const DESIGN_FIELD_NAMES = ['קישור לעיצוב'];
@@ -253,6 +291,31 @@
       selectFont(label) {
         const li = fontLis().find(x => x.getAttribute('textselectedproperty') === label);
         if (li && !li.classList.contains('clsSelected')) li.click();
+      },
+
+      // A single-choice "paid extra" option (e.g. engraving a second side).
+      // Matched loosely by a substring of its property_name, since the exact
+      // wording lives on the site. `yesIncludes` identifies the paid choice.
+      sideOptionUl(nameIncludes) {
+        return [...form.querySelectorAll('ul.clsUlChooseProduct')]
+          .find(u => (u.getAttribute('property_name') || '').includes(nameIncludes)) || null;
+      },
+      // The paid option's own label text (e.g. "כן בשמחה - תוספת למחיר: ₪40"),
+      // so the editor can show the current price without hardcoding it.
+      sideOptionYesText(nameIncludes, yesIncludes) {
+        const ul = this.sideOptionUl(nameIncludes); if (!ul) return null;
+        const li = [...ul.querySelectorAll('li.clsLIChooseProduct')].find(x => (x.textContent || '').includes(yesIncludes));
+        return li ? li.textContent.replace(/\s+/g, ' ').trim() : null;
+      },
+      // Tick the paid choice (yes=true) or the free one (yes=false), like the
+      // customer tapping it. Only clicks when it actually needs to change.
+      setSideOption(nameIncludes, yesIncludes, yes) {
+        const ul = this.sideOptionUl(nameIncludes); if (!ul) return false;
+        const lis = [...ul.querySelectorAll('li.clsLIChooseProduct')];
+        const isYes = li => (li.textContent || '').includes(yesIncludes);
+        const target = yes ? lis.find(isYes) : lis.find(li => !isYes(li));
+        if (target && !target.classList.contains('clsSelected')) target.click();
+        return !!target;
       },
 
       checkedSymbols: () => symBoxes().filter(cb => cb.checked).map(symLabel),
@@ -1161,6 +1224,11 @@
 
     const linesOf = s => textObjs(s).flatMap(o => o.text.split('\n').map(l => l.trim()).filter(Boolean));
 
+    function surfaceHasContent(s) {
+      return state.surfaces[s.key].objects.some(o =>
+        (o.type === 'text' && String(o.text || '').trim()) || o.type === 'symbol');
+    }
+
     function syncToPage() {
       for (const s of SURFACES) bridge.writeFields(s.textFields, linesOf(s));
       const first = SURFACES.map(s => textObjs(s)[0]).find(Boolean);
@@ -1171,6 +1239,10 @@
         if (opt && !syms.includes(opt)) syms.push(opt);
       }
       bridge.setSymbols(syms.slice(0, bridge.symbolCap));
+      // Paid extra sides: the site option is ticked iff that side was engraved.
+      for (const s of SURFACES) {
+        if (s.gate) bridge.setSideOption(s.gate.nameIncludes, s.gate.yesIncludes, surfaceHasContent(s));
+      }
     }
     let syncTimer = null;
     const scheduleSync = () => { clearTimeout(syncTimer); syncTimer = setTimeout(syncToPage, 400); };
@@ -1627,7 +1699,9 @@
     for (const p of parsed) (byBase[p.base] = byBase[p.base] || []).push(p);
     const base = Object.keys(byBase).sort((a, b) => byBase[b].length - byBase[a].length)[0];
     const imgs = base ? byBase[base].sort((a, b) => a.index - b.index) : [];
-    let libKeys = PRODUCTS[base] || (SURFACES_LIB[base] ? [base] : null);
+    // Product id (PicID) wins over image base name, so products that share a
+    // base (e.g. "test") still get their own config.
+    let libKeys = PRODUCTS_BY_ID[bridge.productId] || PRODUCTS[base] || (SURFACES_LIB[base] ? [base] : null);
     if (!libKeys) { console.warn('[DHEditor] no product config for "' + base + '", assuming board+knife'); libKeys = ['board', 'knife']; }
     const entries = libKeys.map(e => (typeof e === 'string' ? { lib: e } : e));
 
@@ -1637,6 +1711,12 @@
       const lib = SURFACES_LIB[entry.lib];
       const d = Object.assign({}, lib, entry.area ? { area: entry.area } : {}, { key: lib.slot, order: ord, img: imgObj });
       d.area = d.area || autoArea(imgObj.w, imgObj.h, d.areaMm);
+      // Paid-upgrade surface: show the price (read live from the site) on its tab.
+      if (d.gate) {
+        const yes = bridge.sideOptionYesText(d.gate.nameIncludes, d.gate.yesIncludes);
+        const price = yes && (yes.match(/₪\s?\d+|\d+\s?₪/) || [])[0];
+        if (price) d.label = `${lib.label} (${price.replace(/\s/g, '')})`;
+      }
       const rImg = (d.area.wPct * imgObj.w) / (d.area.hPct * imgObj.h), rMm = d.areaMm.w / d.areaMm.h;
       if (Math.abs(rImg / rMm - 1) > 0.02) console.warn(`[DHEditor] ${lib.slot}: area ratio ${rImg.toFixed(3)} vs ${rMm.toFixed(3)} mm — the box may not sit on the engraving zone`);
       out.push(d);

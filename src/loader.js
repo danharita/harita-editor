@@ -14,7 +14,7 @@
   var LIVE = false;              // true = מוצג לכל הלקוחות (בכל המוצרים)
   // מוצרים שהעורך חי עליהם לכל הלקוחות בלי #dhtest (לפי PicID). שאר המוצרים
   // נשארים בפיילוט ומופיעים רק עם #dhtest. להוסיף מוצר = להוסיף את המזהה כאן.
-  var LIVE_PRODUCTS = ['2851248'];
+  var LIVE_PRODUCTS = ['2851248', '3008779'];
   var PREFIX = 'engrave-bg-';
   var TEST_KEY = 'dh-editor-test';
   var DESIGN_FIELD = 'קישור לעיצוב';
