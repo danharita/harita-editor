@@ -960,6 +960,10 @@
 
     function addText() {
       const s = surf();
+      // If an empty text box already exists on this surface, don't add another
+      // (that confuses people) — just jump back into editing the empty one.
+      const empty = cur().objects.find(o => o.type === 'text' && !String(o.text || '').trim());
+      if (empty) { syncPanel(true); startEdit(empty); return; }
       if (cur().objects.filter(o => o.type === 'text').length >= s.limits.textBoxes) { toast(`אפשר עד ${s.limits.textBoxes} תיבות טקסט על ה${s.label}`); return; }
       const o = newText(s, '', lastFont, freeSpot(s.areaMm));
       cur().objects.push(o);
