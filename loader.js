@@ -10,11 +10,22 @@
 (function () {
   'use strict';
   var BASE = 'https://danharita.github.io/harita-editor/';
-  var VER = '202609301526';           // גרסת הטוען (לבדיקה בקונסול: DHEditorLoader)
-  var LIVE = false;              // true = מוצג לכל הלקוחות
+  var VER = '202609301539';           // גרסת הטוען (לבדיקה בקונסול: DHEditorLoader)
+  var LIVE = false;              // true = מוצג לכל הלקוחות (בכל המוצרים)
+  // מוצרים שהעורך חי עליהם לכל הלקוחות בלי #dhtest (לפי PicID). שאר המוצרים
+  // נשארים בפיילוט ומופיעים רק עם #dhtest. להוסיף מוצר = להוסיף את המזהה כאן.
+  var LIVE_PRODUCTS = ['2851248'];
   var PREFIX = 'engrave-bg-';
   var TEST_KEY = 'dh-editor-test';
   var DESIGN_FIELD = 'קישור לעיצוב';
+
+  function productId() {
+    var el = document.getElementById('PicID') || document.querySelector('input[name="PicID"]');
+    return el ? String(el.value || '').trim() : '';
+  }
+  function productLive() {
+    return LIVE || LIVE_PRODUCTS.indexOf(productId()) !== -1;
+  }
 
   function testMode() {
     var h = location.hash || '';
@@ -103,7 +114,7 @@
   function start(bgs) {
     if (!bgs.length) return;
     var test = testMode();
-    if (!LIVE && !test) return;
+    if (!productLive() && !test) return;
     var anchor = findAnchor();
     if (!anchor || document.querySelector('.dh-choose')) return;
     var mode = '';
