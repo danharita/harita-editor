@@ -50,8 +50,21 @@
   ];
   const DEFAULT_FONT = 'david';
 
-  // Symbol id -> exact option name in "סמלים לבחירה".
-  const SYMBOL_OPTION = { heart: 'לב', crown: 'כתר' };
+  // Symbol id -> exact option name in "סמלים לבחירה" on the product page.
+  // When a customer adds a symbol, the matching checkbox is ticked on the
+  // order form. Options not yet on the site are still mapped, so ticking
+  // starts working automatically once Dan adds them with the same name.
+  const SYMBOL_OPTION = {
+    heart_hollow: 'לב חלול רגיל',
+    heart_fancy: 'לב חלול מעוצב',
+    heart_full: 'לב',
+    crown: 'כתר',
+    star_david: 'מגן דוד',
+    chef_hat: 'כובע שף',
+    saltbae: 'איש המלח',
+    knives_crossed: 'סכינים מוצלבות',
+    cleaver_knife: 'סכין וגרזן מוצלבים',
+  };
 
   // A library of engraving surfaces, one entry per kind. `area` (position of
   // the engraving zone within the photo, in %) is optional — without it the
