@@ -10,7 +10,8 @@
 (function () {
   'use strict';
   var BASE = 'https://danharita.github.io/harita-editor/';
-  var VER = '202609301959';           // גרסת הטוען (לבדיקה בקונסול: DHEditorLoader)
+  var API_BASE = 'https://dan-harita-api.onrender.com';  // שרת הקונפיג/עיצובים
+  var VER = '202609302117';           // גרסת הטוען (לבדיקה בקונסול: DHEditorLoader)
   var LIVE = false;              // true = מוצג לכל הלקוחות (בכל המוצרים)
   // מוצרים שהעורך חי עליהם לכל הלקוחות בלי #dhtest (לפי PicID). שאר המוצרים
   // נשארים בפיילוט ומופיעים רק עם #dhtest. להוסיף מוצר = להוסיף את המזהה כאן.
@@ -111,10 +112,24 @@
     return sel ? sel.closest('.clsCatalogElmExtraRow') : null;
   }
 
+  // Decide whether to show the editor. Built-in live list or test mode show
+  // immediately; otherwise a product that has a saved calibration config on
+  // the server is treated as live too (so calibrating in the tool is enough).
   function start(bgs) {
     if (!bgs.length) return;
     var test = testMode();
-    if (!productLive() && !test) return;
+    if (productLive() || test) { build(bgs, test); return; }
+    var id = productId();
+    if (!id) return;
+    try {
+      fetch(API_BASE + '/api/products/' + encodeURIComponent(id))
+        .then(function (r) { return r.json(); })
+        .then(function (j) { if (j && j.ok) build(bgs, false); })
+        .catch(function () {});
+    } catch (e) { /* ignore */ }
+  }
+
+  function build(bgs, test) {
     var anchor = findAnchor();
     if (!anchor || document.querySelector('.dh-choose')) return;
     var mode = '';
