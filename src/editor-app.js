@@ -82,7 +82,7 @@
     },
     knife: {
       slot: 'knife', label: 'סכין', fileLabel: 'knife',
-      areaMm: { w: 72, h: 12 },
+      areaMm: { w: 100, h: 20 },
       engrave: { color: '#161616', opacity: 0.8, blend: 'multiply' },
       minLetterMm: 2, defaultTextMm: 8,
       limits: { textBoxes: 2, symbols: 2, linesPerBox: 2, charsPerLine: 24 },
@@ -135,13 +135,14 @@
     // pass — the blade is busy with branding+dimples; fine-tune in the tool.
     '2851248': [
       { lib: 'board', area: { xPct: 15.0, yPct: 14.0, wPct: 67.0, hPct: 72.0, shape: 'rect' } },
-      { lib: 'knife', area: { xPct: 14.0, yPct: 29.0, wPct: 24.0, hPct: 12.0, shape: 'rect' } },
+      // Santoku: engraving over the blade face, including the dimples.
+      { lib: 'knife', area: { xPct: 9.0, yPct: 33.0, wPct: 40.0, hPct: 24.0, shape: 'rect' } },
     ],
-    // Pocketknife: side 1 (blade right), side 2 (blade left, paid upgrade).
-    // Areas measured on Dan's photos (first pass — refine with the tool).
+    // Pocketknife: engraving is on the BLADE of each side (the boxes sit on
+    // the blade, not the wood handle).
     '3008779': [
-      { lib: 'olar1', area: { xPct: 63.0, yPct: 44.0, wPct: 27.0, hPct: 18.0, shape: 'rect' } },
-      { lib: 'olar2', area: { xPct: 10.0, yPct: 44.0, wPct: 27.0, hPct: 18.0, shape: 'rect' } },
+      { lib: 'olar1', area: { xPct: 10.0, yPct: 44.0, wPct: 27.0, hPct: 18.0, shape: 'rect' } },
+      { lib: 'olar2', area: { xPct: 63.0, yPct: 44.0, wPct: 27.0, hPct: 18.0, shape: 'rect' } },
     ],
   };
 
