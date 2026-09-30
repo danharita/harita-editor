@@ -297,28 +297,45 @@
       },
 
       // A single-choice "paid extra" option (e.g. engraving a second side).
-      // Matched loosely by a substring of its property_name, since the exact
-      // wording lives on the site. `yesIncludes` identifies the paid choice.
-      sideOptionUl(nameIncludes) {
-        return [...form.querySelectorAll('ul.clsUlChooseProduct')]
-          .find(u => (u.getAttribute('property_name') || '').includes(nameIncludes)) || null;
+      // 2all renders these as a <ul> picker, a native <select>, or both, so we
+      // find whichever is present. Matched by a substring of the property_name
+      // (or, as a fallback, the row's visible label), since the exact wording
+      // lives on the site. `yesIncludes` identifies the paid choice.
+      sideOptionEl(nameIncludes) {
+        const hit = (el) => el && (el.getAttribute('property_name') || '').includes(nameIncludes);
+        const ul = [...form.querySelectorAll('ul.clsUlChooseProduct')].find(hit);
+        if (ul) return { kind: 'ul', el: ul };
+        const sel = [...form.querySelectorAll('select.clsSelectChooseProduct')].find(hit);
+        if (sel) return { kind: 'select', el: sel };
+        // Fallback: match by the row's visible label text.
+        const row = [...form.querySelectorAll('.clsCatalogElmExtraRow')].find(r => (r.textContent || '').includes(nameIncludes));
+        if (row) {
+          const u = row.querySelector('ul.clsUlChooseProduct'); if (u) return { kind: 'ul', el: u };
+          const s = row.querySelector('select.clsSelectChooseProduct'); if (s) return { kind: 'select', el: s };
+        }
+        return null;
       },
-      // The paid option's own label text (e.g. "כן בשמחה - תוספת למחיר: ₪40"),
-      // so the editor can show the current price without hardcoding it.
       sideOptionYesText(nameIncludes, yesIncludes) {
-        const ul = this.sideOptionUl(nameIncludes); if (!ul) return null;
-        const li = [...ul.querySelectorAll('li.clsLIChooseProduct')].find(x => (x.textContent || '').includes(yesIncludes));
-        return li ? li.textContent.replace(/\s+/g, ' ').trim() : null;
+        const o = this.sideOptionEl(nameIncludes); if (!o) return null;
+        const items = o.kind === 'ul' ? [...o.el.querySelectorAll('li.clsLIChooseProduct')] : [...o.el.options];
+        const it = items.find(x => (x.textContent || '').includes(yesIncludes));
+        return it ? (it.textContent || '').replace(/\s+/g, ' ').trim() : null;
       },
-      // Tick the paid choice (yes=true) or the free one (yes=false), like the
-      // customer tapping it. Only clicks when it actually needs to change.
+      // Pick the paid choice (yes=true) or the free one (yes=false), like the
+      // customer choosing it. Handles both the <ul> picker and a <select>.
       setSideOption(nameIncludes, yesIncludes, yes) {
-        const ul = this.sideOptionUl(nameIncludes); if (!ul) return false;
-        const lis = [...ul.querySelectorAll('li.clsLIChooseProduct')];
-        const isYes = li => (li.textContent || '').includes(yesIncludes);
-        const target = yes ? lis.find(isYes) : lis.find(li => !isYes(li));
-        if (target && !target.classList.contains('clsSelected')) target.click();
-        return !!target;
+        const o = this.sideOptionEl(nameIncludes); if (!o) return false;
+        const isYes = x => (x.textContent || '').includes(yesIncludes);
+        if (o.kind === 'ul') {
+          const lis = [...o.el.querySelectorAll('li.clsLIChooseProduct')];
+          const t = yes ? lis.find(isYes) : lis.find(li => !isYes(li));
+          if (t && !t.classList.contains('clsSelected')) t.click();
+          return !!t;
+        }
+        const opts = [...o.el.options];
+        const t = yes ? opts.find(isYes) : opts.find(op => !isYes(op) && op.value && op.value !== '0');
+        if (t && o.el.value !== t.value) { o.el.value = t.value; fire(o.el); }
+        return !!t;
       },
 
       checkedSymbols: () => symBoxes().filter(cb => cb.checked).map(symLabel),

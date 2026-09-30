@@ -64,13 +64,9 @@ li.clsSelected { border-color: #222; background: #f8f8f8; }
     </div>
 
     <div class="clsCatalogElmExtraRow" ismust="1" fieldtype="2"><span class="clsCatalogElmExtraRow_TextCont"><span style="color:red;">*</span><span>תוספת חריטה בצד השני של האולר: </span><span class="clsCatalogElmExtraRow_TextSelected"></span></span>
-      <select style="display:none;" onchange="javascript:funcSelectProdExtraChange(this,0,0);" name="elm_extra_product_Select" class="clsSelectChooseProduct" property_name="תוספת חריטה בצד השני של האולר" property_id="50001" ismust="1" isinventory="0">
+      <select onchange="javascript:funcSelectProdExtraChange(this,0,0);" name="elm_extra_product_Select" class="clsSelectChooseProduct" property_name="תוספת חריטה בצד השני של האולר" property_id="50001" ismust="1" isinventory="0">
         <option value="0"> --- בחר --- </option><option value="700001">כן בשמחה - תוספת למחיר: ₪40</option><option value="700002">לא, זה בסדר</option>
       </select>
-      <ul name="elm_extra_product_Ul" class="clsUlChooseProduct" property_name="תוספת חריטה בצד השני של האולר" property_id="50001" ismust="1">
-        <li class="clsLIChooseProduct" value="700001" textselectedproperty="כן בשמחה - תוספת למחיר: ₪40" pic="">כן בשמחה - תוספת למחיר: ₪40</li>
-        <li class="clsLIChooseProduct" value="700002" textselectedproperty="לא, זה בסדר" pic="">לא, זה בסדר</li>
-      </ul>
     </div>
 
     <div class="clsCatalogElmExtraRow" ismust="0" fieldtype="1"><span class="clsCatalogElmExtraRow_TextCont"><span>הערות מיוחדות/תוספות של סמלים וכו': </span></span> <input type="text" name="elm_extra_product_Text" class="clsTextChooseProduct" property_name="הערות מיוחדות/תוספות של סמלים וכו'" property_id="30383" ismust="0" maxlength="100"></div>
