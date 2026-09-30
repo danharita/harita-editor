@@ -1693,6 +1693,40 @@
 
   let session = null;   // { root, editor, bar, bridge }
 
+  // Fetch a product's engraving config from the server (set by the staff
+  // calibration tool). Returns null on any failure so we fall back to the
+  // built-in config.
+  async function fetchProductConfig(productId) {
+    if (!productId || productId === 'unknown') return null;
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 4000);
+      const r = await fetch(`${API_BASE}/api/products/${encodeURIComponent(productId)}`, { signal: ctrl.signal });
+      clearTimeout(t);
+      const j = await r.json();
+      return (j && j.ok && j.product) ? j.product : null;
+    } catch (e) { return null; }
+  }
+
+  // A server surface spec -> a surface-library-shaped object.
+  function srvSurfaceToLib(s, i) {
+    const mm = s.areaMm || { w: 100, h: 30 };
+    const lib = {
+      slot: 'srv' + i,
+      label: s.label || ('משטח ' + (i + 1)),
+      fileLabel: (s.fileLabel || ('srf' + i)).replace(/[^A-Za-z0-9_-]/g, '') || ('srf' + i),
+      areaMm: { w: +mm.w || 100, h: +mm.h || 30 },
+      engrave: s.engrave || { color: '#2b2b2b', opacity: 0.82, blend: 'multiply' },
+      minLetterMm: 2,
+      defaultTextMm: Math.max(4, Math.round((+mm.h || 20) * 0.55)),
+      limits: Object.assign({ textBoxes: 2, symbols: 2, linesPerBox: 2, charsPerLine: 24 }, s.limits || {}),
+      textFields: Array.isArray(s.textFields) ? s.textFields : [],
+      placeholder: 'knife',
+    };
+    if (s.gate && s.gate.nameIncludes) lib.gate = { nameIncludes: s.gate.nameIncludes, yesIncludes: s.gate.yesIncludes || 'כן' };
+    return lib;
+  }
+
   async function resolveSurfaces(ctx, bridge) {
     // Group the images by base name and pick the product on the page (the
     // base with the most images — normally the only one). Within it, order
@@ -1702,16 +1736,24 @@
     for (const p of parsed) (byBase[p.base] = byBase[p.base] || []).push(p);
     const base = Object.keys(byBase).sort((a, b) => byBase[b].length - byBase[a].length)[0];
     const imgs = base ? byBase[base].sort((a, b) => a.index - b.index) : [];
-    // Product id (PicID) wins over image base name, so products that share a
-    // base (e.g. "test") still get their own config.
-    let libKeys = PRODUCTS_BY_ID[bridge.productId] || PRODUCTS[base] || (SURFACES_LIB[base] ? [base] : null);
-    if (!libKeys) { console.warn('[DHEditor] no product config for "' + base + '", assuming board+knife'); libKeys = ['board', 'knife']; }
-    const entries = libKeys.map(e => (typeof e === 'string' ? { lib: e } : e));
+    // Config priority: the server (calibration tool, keyed by product id) wins,
+    // then the built-in id map, then the image-base map. So a product can be
+    // (re)calibrated without a code change.
+    let entries = null;
+    const srv = await fetchProductConfig(bridge.productId);
+    if (srv && srv.surfaces && srv.surfaces.length) {
+      entries = srv.surfaces.map((s, i) => ({ lib: srvSurfaceToLib(s, i), area: s.area }));
+    } else {
+      let libKeys = PRODUCTS_BY_ID[bridge.productId] || PRODUCTS[base] || (SURFACES_LIB[base] ? [base] : null);
+      if (!libKeys) { console.warn('[DHEditor] no product config for "' + base + '", assuming board+knife'); libKeys = ['board', 'knife']; }
+      entries = libKeys.map(e => (typeof e === 'string' ? { lib: e } : e));
+    }
 
+    const libOf = e => (typeof e.lib === 'string' ? SURFACES_LIB[e.lib] : e.lib);
     const out = [];
     const usedSlots = new Set();
     const finish = (entry, imgObj, ord) => {
-      const lib = SURFACES_LIB[entry.lib];
+      const lib = libOf(entry);
       const d = Object.assign({}, lib, entry.area ? { area: entry.area } : {}, { key: lib.slot, order: ord, img: imgObj });
       d.area = d.area || autoArea(imgObj.w, imgObj.h, d.areaMm);
       // Paid-upgrade surface: show the price (read live from the site) on its tab.
@@ -1727,7 +1769,7 @@
     };
     for (let i = 0; i < imgs.length; i++) {
       const entry = entries[i] || entries[entries.length - 1];
-      const lib = SURFACES_LIB[entry.lib];
+      const lib = libOf(entry);
       if (!lib || usedSlots.has(lib.slot)) continue;
       const im = await loadImage(imgs[i].url);
       finish(entry, { el: im, url: imgs[i].url, w: im.naturalWidth, h: im.naturalHeight }, i);
@@ -1736,7 +1778,7 @@
     // drawn stand-in, so both tabs show even from a single placeholder image
     if (ctx.test) {
       entries.forEach((entry, i) => {
-        const lib = SURFACES_LIB[entry.lib];
+        const lib = libOf(entry);
         if (!lib || usedSlots.has(lib.slot) || !lib.placeholder || !lib.textFields.some(bridge.hasField)) return;
         const c = lib.placeholder === 'knife' ? drawKnife() : drawBoard();
         finish(entry, { el: c, url: c.toDataURL('image/jpeg', 0.9), w: c.width, h: c.height }, i);
