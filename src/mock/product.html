@@ -110,7 +110,7 @@ li.clsSelected { border-color: #222; background: #f8f8f8; }
     </script>
     <script>
 /* דן חריטה: עורך העיצוב. טוען קטן לתבנית "תוכן שמאל לדף מוצר".
- * 1. מסתיר מהגלריה תמונות ששמן מתחיל ב-engrave-bg- (תמונות רקע לעורך),
+ * 1. מסתיר מהגלריה תמונות רקע לעורך (שם שמתחיל ב-engrave-bg- או תג קצר BG/BG1/BG 2),
  *    ומסתיר תמיד את השדה הפנימי "קישור לעיצוב".
  * 2. כשיש תמונה כזאת, מסתיר את התצוגה הרגילה ומציג שני כפתורים:
  *    "רוצה לעצב לבד" (פותח את העורך) ו"עצבו בשבילי" (מחזיר את התצוגה של היום).
@@ -122,7 +122,7 @@ li.clsSelected { border-color: #222; background: #f8f8f8; }
   'use strict';
   var BASE = '/';
   var API_BASE = 'https://dan-harita-api.onrender.com';  // שרת הקונפיג/עיצובים
-  var VER = '202609302117';           // גרסת הטוען (לבדיקה בקונסול: DHEditorLoader)
+  var VER = '202610021411';           // גרסת הטוען (לבדיקה בקונסול: DHEditorLoader)
   var LIVE = false;              // true = מוצג לכל הלקוחות (בכל המוצרים)
   // מוצרים שהעורך חי עליהם לכל הלקוחות בלי #dhtest (לפי PicID). שאר המוצרים
   // נשארים בפיילוט ומופיעים רק עם #dhtest. להוסיף מוצר = להוסיף את המזהה כאן.
@@ -130,6 +130,18 @@ li.clsSelected { border-color: #222; background: #f8f8f8; }
   var PREFIX = 'engrave-bg-';
   var TEST_KEY = 'dh-editor-test';
   var DESIGN_FIELD = 'קישור לעיצוב';
+
+  // An image is an editor background if its name starts with engrave-bg-, OR is
+  // a short "BG" tag: BG, BG1, BG 2, BG-3, bg_4 ... (case-insensitive). Returns
+  // the surface key (so "BG"->"bg", "BG 2"->"bg-2") or null if it isn't one.
+  function bgKey(name) {
+    name = String(name || '').trim();
+    if (!name) return null;
+    if (name.indexOf(PREFIX) === 0) return name.slice(PREFIX.length).trim();
+    var m = /^bg\s*[-_ ]?\s*(\d+)?$/i.exec(name);
+    if (m) return m[1] ? 'bg-' + m[1] : 'bg';
+    return null;
+  }
 
   function productId() {
     var el = document.getElementById('PicID') || document.querySelector('input[name="PicID"]');
@@ -150,7 +162,11 @@ li.clsSelected { border-color: #222; background: #f8f8f8; }
 
   var css = document.createElement('style');
   css.textContent =
-    '.fotorama__nav__frame:has(img[alt^="' + PREFIX + '"]){display:none!important}' +
+    '.fotorama__nav__frame:has(img[alt^="' + PREFIX + '"]),' +
+    '.fotorama__nav__frame:has(img[alt="BG" i]),' +
+    '.fotorama__nav__frame:has(img[alt^="BG " i]),' +
+    '.fotorama__nav__frame:has(img[alt^="BG-" i]),' +
+    '.fotorama__nav__frame:has(img[alt^="BG_" i]){display:none!important}' +
     '.clsCatalogElmExtraRow:has(input.clsTextChooseProduct[property_name="' + DESIGN_FIELD + '"]){display:none!important}' +
     'body.dh-hide-default .clsCatalogElmExtraRow:has(input.clsTextChooseProduct[property_name^="טקסט לחריטה"]),' +
     'body.dh-hide-default .clsCatalogElmExtraRow:has(.clsSelectChooseProduct[property_name="סוג כתב"]),' +
@@ -190,18 +206,20 @@ li.clsSelected { border-color: #222; background: #f8f8f8; }
         for (var i = api.data.length - 1; i >= 0; i--) {
           var d = api.data[i];
           var name = String(d.alt || d.caption || d.title || '').trim();
-          if (name.indexOf(PREFIX) !== 0) continue;
-          out.unshift({ key: name.slice(PREFIX.length).trim(), url: new URL(d.full || d.img, location.href).href });
+          var k = bgKey(name);
+          if (k === null) continue;
+          out.unshift({ key: k, url: new URL(d.full || d.img, location.href).href });
           try { if (api.data.length > 1) api.splice(i, 1); } catch (e) { /* the CSS rule still hides the thumbnail */ }
         }
         return done(out);
       }
       if (++tries < 60) return setTimeout(poll, 250);
       var seen = {}, res = [];
-      var imgs = document.querySelectorAll('img[alt^="' + PREFIX + '"],img[title^="' + PREFIX + '"]');
+      var imgs = document.querySelectorAll('.fotorama img[alt], .fotorama img[title], img[alt], img[title]');
       for (var j = 0; j < imgs.length; j++) {
         var n = (imgs[j].getAttribute('alt') || imgs[j].getAttribute('title') || '').trim();
-        var key = n.slice(PREFIX.length).trim();
+        var key = bgKey(n);
+        if (key === null) continue;
         if (!seen[key]) { seen[key] = 1; res.push({ key: key, url: new URL(imgs[j].getAttribute('src'), location.href).href }); }
       }
       done(res);
