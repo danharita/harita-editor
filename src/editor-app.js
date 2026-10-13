@@ -269,6 +269,10 @@
       symbolCap: maxProps > 0 ? maxProps : Infinity,
       hasField: name => !!textInput(name),
       fieldsPresent: names => names.filter(n => textInput(n)),
+      // Every engraving-text field on the page ("טקסט לחריטה…"), in page order.
+      engraveFieldNames: () => [...document.querySelectorAll('input.clsTextChooseProduct[property_name]')]
+        .map(i => i.getAttribute('property_name').trim())
+        .filter((n, i, a) => n.indexOf('טקסט לחריטה') === 0 && a.indexOf(n) === i),
       isRequired: name => { const i = textInput(name); return !!(i && i.getAttribute('ismust') === '1'); },
       readFields: names => names.map(n => textInput(n)).filter(Boolean).map(i => i.value.trim()).filter(Boolean),
 
@@ -1801,11 +1805,46 @@
         finish(entry, { el: c, url: c.toDataURL('image/jpeg', 0.9), w: c.width, h: c.height }, i);
       });
     }
-    for (const s of out) {
-      s.textFields = bridge.fieldsPresent(s.textFields);
-      s.requiresText = s.textFields.some(bridge.isRequired);
-    }
+    for (const s of out) s.textFields = bridge.fieldsPresent(s.textFields || []);
+    autoMapFields(out, bridge);
+    for (const s of out) s.requiresText = s.textFields.some(bridge.isRequired);
     return out.sort((a, b) => a.order - b.order);
+  }
+
+  // A surface whose config lists no site fields (e.g. the calibration tool's
+  // optional box was left empty) gets them from the page by name:
+  //   1) fields whose name contains the surface label ("קרש" -> "טקסט לחריטה קרש, שורה 1..3")
+  //   2) otherwise the remaining engraving fields — "צד שני" ones for a paid
+  //      second side, the rest (not upgrade-only) for the first plain surface.
+  // Lines are ordered by "שורה N"; a field without a line number goes last.
+  const SIDE2_RE = /צד\s*ה?שני/;
+  function autoMapFields(surfaces, bridge) {
+    const all = bridge.engraveFieldNames();
+    if (!all.length) return;
+    const claimed = new Set();
+    surfaces.forEach(s => s.textFields.forEach(n => claimed.add(n)));
+    const free = () => all.filter(n => !claimed.has(n));
+    const lineNo = n => { const m = /שורה\s*(\d+)/.exec(n); return m ? +m[1] : 99; };
+    const take = (s, names) => {
+      s.textFields = names.slice().sort((a, b) => lineNo(a) - lineNo(b));
+      s.textFields.forEach(n => claimed.add(n));
+      if (s.textFields.length) console.info(`[DHEditor] ${s.label}: fields auto-mapped ->`, s.textFields);
+    };
+    const baseLabel = s => String(s.baseLabel || s.label || '').replace(/\s*\(.*\)\s*$/, '').trim();
+    const empty = () => surfaces.filter(s => !s.textFields.length);
+    // 1) by label
+    for (const s of empty()) {
+      const lbl = baseLabel(s);
+      if (lbl.length < 2) continue;
+      const hit = free().filter(n => n.includes(lbl));
+      if (hit.length) take(s, hit);
+    }
+    // 2) leftovers by role
+    for (const s of empty()) {
+      const side2 = !!s.gate || SIDE2_RE.test(baseLabel(s));
+      const hit = free().filter(n => side2 ? SIDE2_RE.test(n) : (!SIDE2_RE.test(n) && !/שודרג/.test(n)));
+      if (hit.length) take(s, hit);
+    }
   }
 
   function injectCss() {
