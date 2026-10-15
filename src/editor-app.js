@@ -353,12 +353,31 @@
       },
 
       hasDesignField: () => DESIGN_FIELD_NAMES.some(n => textInput(n)),
-      setDesignField(text) {
+      // Writes the design note into "קישור לעיצוב". A product without that field
+      // gets a short marker at the end of the notes field instead ("הערות…"),
+      // so the order still carries the design: "[עיצוב CODE: link]", or just
+      // "[עיצוב CODE]" when the field's length limit is tight. The customer's
+      // own notes are never cut; clearing removes only our marker.
+      setDesignField(text, meta) {
         const inp = DESIGN_FIELD_NAMES.map(textInput).find(Boolean);
-        if (!inp) return false;
-        const max = parseInt(inp.getAttribute('maxlength'), 10) || 0;
-        const v = max ? text.slice(0, max) : text;
-        if (inp.value !== v) { inp.value = v; fire(inp); }
+        if (inp) {
+          const max = parseInt(inp.getAttribute('maxlength'), 10) || 0;
+          const v = max ? text.slice(0, max) : text;
+          if (inp.value !== v) { inp.value = v; fire(inp); }
+          return true;
+        }
+        const notes = [...form.querySelectorAll('input.clsTextChooseProduct, textarea.clsTextChooseProduct')]
+          .find(i => (i.getAttribute('property_name') || '').trim().indexOf('הערות') === 0);
+        if (!notes) return false;
+        const MARK_RE = /\s*\[עיצוב [^\]]*\]\s*$/;
+        const base = notes.value.replace(MARK_RE, '').trim();
+        const max = parseInt(notes.getAttribute('maxlength'), 10) || 0;
+        let v = base;
+        if (text && meta && meta.code) {
+          const opts = [`[עיצוב ${meta.code}: ${meta.view || ''}]`, `[עיצוב ${meta.code}]`];
+          for (const m of opts) { const c = (base ? base + ' ' : '') + m; if (!max || c.length <= max) { v = c; break; } }
+        }
+        if (notes.value !== v) { notes.value = v; fire(notes); }
         return true;
       },
 
@@ -1469,6 +1488,7 @@
     const designFieldText = (id, res) => `עוצב ע״י הלקוח - אין צורך בסקיצה · קוד ${id}`
       + (res && res.view ? ` · ${res.view}` : '')
       + (test ? ' · בדיקה' : '');
+    const designMeta = (id, res) => ({ code: id, view: (res && res.view) || `${API_BASE}/d/${id}` });
 
     // Remember the saved code in the browser so the site-wide widget can link
     // it to the order number once the customer reaches the payment page. Same
@@ -1526,7 +1546,7 @@
         const finalId = (res && res.code) || id;
         savedSnap = designSnap();
         savedId = finalId;
-        bridge.setDesignField(designFieldText(finalId, res));
+        bridge.setDesignField(designFieldText(finalId, res), designMeta(finalId, res));
         rememberForOrderLink(finalId);
         saveDraft();
         updateStatus();
@@ -1676,7 +1696,7 @@
       // the page fields follow the design from the start (a draft may differ
       // from what is in them), and a design saved earlier keeps its code
       syncToPage();
-      if (isSaved()) bridge.setDesignField(designFieldText(savedId));
+      if (isSaved()) bridge.setDesignField(designFieldText(savedId), designMeta(savedId));
       // the other fonts load in the background
       for (const f of FONTS) ensureFont(f.id).then(() => { const o = activeModel(); if (o && o.type === 'text') updateFontChips(o); }).catch(() => {});
     }
@@ -1698,7 +1718,7 @@
         lastWidth = 0;
         fitStage();
         syncToPage();
-        if (isSaved()) bridge.setDesignField(designFieldText(savedId));
+        if (isSaved()) bridge.setDesignField(designFieldText(savedId), designMeta(savedId));
       },
       nagSave() {
         toast('כדי להוסיף לסל, שמרו קודם את העיצוב');
