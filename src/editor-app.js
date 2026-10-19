@@ -394,12 +394,13 @@
         const notes = [...form.querySelectorAll('input.clsTextChooseProduct, textarea.clsTextChooseProduct')]
           .find(i => (i.getAttribute('property_name') || '').trim().indexOf('הערות') === 0);
         if (!notes) return false;
-        const MARK_RE = /\s*\[עיצוב [^\]]*\]\s*$/;
+        const MARK_RE = /\s*\[עיצוב[^\]]*\]\s*$/;
         const base = notes.value.replace(MARK_RE, '').trim();
         const max = parseInt(notes.getAttribute('maxlength'), 10) || 0;
         let v = base;
         if (text && meta && meta.code) {
-          const opts = [`[עיצוב ${meta.code}: ${meta.view || ''}]`, `[עיצוב ${meta.code}]`];
+          const tag = meta.logo ? 'עיצוב+לוגו' : 'עיצוב';
+          const opts = [`[${tag} ${meta.code}: ${meta.view || ''}]`, `[${tag} ${meta.code}]`];
           for (const m of opts) { const c = (base ? base + ' ' : '') + m; if (!max || c.length <= max) { v = c; break; } }
         }
         if (notes.value !== v) { notes.value = v; fire(notes); }
@@ -1704,7 +1705,7 @@
     const designFieldText = (id, res) => (imageObjs().length ? '⚠ כולל לוגו/תמונה של הלקוח – לבדיקת מעצב' : 'עוצב ע״י הלקוח - אין צורך בסקיצה')
       + ` · ${designMeta(id, res).view}`
       + (test ? ' · בדיקה' : '');
-    const designMeta = (id, res) => ({ code: id, view: (res && res.view) || `${API_BASE}/d/${id}` });
+    const designMeta = (id, res) => ({ code: id, view: (res && res.view) || `${API_BASE}/d/${id}`, logo: imageObjs().length > 0 });
 
     // Remember the saved code in the browser so the site-wide widget can link
     // it to the order number once the customer reaches the payment page. Same
