@@ -341,9 +341,30 @@
           return !!t;
         }
         const opts = [...o.el.options];
-        const t = yes ? opts.find(isYes) : opts.find(op => !isYes(op) && op.value && op.value !== '0');
+        // "off" with no free choice listed (e.g. the logo upgrade): back to the
+        // empty "--- … ---" placeholder.
+        const t = yes ? opts.find(isYes)
+          : (opts.find(op => !isYes(op) && op.value && op.value !== '0') || opts.find(op => !op.value || op.value === '0'));
         if (t && o.el.value !== t.value) { o.el.value = t.value; fire(o.el); }
         return !!t;
+      },
+      // The paid "attach an image / logo" option, if the product has one:
+      // { name, yes, price } — yes = the exact text of its priced choice.
+      imageOption() {
+        const isImg = n => /תמונה|לוגו/.test(n || '');
+        const els = [...form.querySelectorAll('select.clsSelectChooseProduct, ul.clsUlChooseProduct')]
+          .filter(el => isImg(el.getAttribute('property_name')));
+        for (const el of els) {
+          const items = el.tagName === 'SELECT' ? [...el.options] : [...el.querySelectorAll('li.clsLIChooseProduct')];
+          const paid = items.find(x => /₪\s?\d|\d\s?₪/.test(x.textContent || ''));
+          if (paid) {
+            const yes = (paid.textContent || '').replace(/\s+/g, ' ').trim();
+            const price = (yes.match(/₪\s?[\d,]+|[\d,]+\s?₪/) || [''])[0].replace(/\s/g, '');
+            // match the choice by its price — the site's text has odd spacing
+            return { name: el.getAttribute('property_name'), yes: price || yes, label: yes, price };
+          }
+        }
+        return null;
       },
 
       checkedSymbols: () => symBoxes().filter(cb => cb.checked).map(symLabel),
@@ -521,6 +542,8 @@
   <div class="dhe-toolbar">
     <button class="dhe-btn" data-el="btnAddText" type="button">+ טקסט</button>
     <button class="dhe-btn" data-el="btnAddSym" type="button" aria-expanded="false">+ סמל</button>
+    <button class="dhe-btn" data-el="btnAddImg" type="button" hidden>+ לוגו / תמונה</button>
+    <input type="file" data-el="imgFile" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
     <span class="grow"></span>
     <button class="dhe-btn icon" data-el="btnUndo" type="button" aria-label="ביטול" title="ביטול"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7l5 5-5 5"/><path d="M20 12H9a5 5 0 0 0 0 10h2"/></svg></button>
     <button class="dhe-btn icon" data-el="btnRedo" type="button" aria-label="חזרה" title="חזרה"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7l-5 5 5 5"/><path d="M4 12h11a5 5 0 0 1 0 10h-2"/></svg></button>
@@ -542,10 +565,16 @@
     <div class="dhe-row"><button class="dhe-btn danger" data-el="sDelete" type="button">מחיקה</button></div>
     ${nudgeRow()}
   </section>
+  <section class="dhe-panel" data-el="panelImg" hidden>
+    <h2>הלוגו / התמונה שלכם</h2>
+    <p class="dhe-hint">המעצב שלנו יכין את הקובץ לחריטה ויאשר אותו איתכם לפני הביצוע. כאן קובעים את הגודל והמיקום.</p>
+    <div class="dhe-row"><button class="dhe-btn" data-el="iReplace" type="button">החלפת קובץ</button><button class="dhe-btn danger" data-el="iDelete" type="button">מחיקה</button></div>
+    ${nudgeRow()}
+  </section>
   <div class="dhe-issues" data-el="issues" hidden aria-live="polite"></div>
   <div class="dhe-save">
     <button class="dhe-btn primary dhe-save-btn" data-el="btnSave" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg><span>אישור סופי של העיצוב</span></button>
-    <p class="dhe-save-note">בלחיצה על הכפתור אני מאשר/ת שזהו העיצוב הסופי לחריטה — הטקסט, האיות, הגופן והמיקום נכונים, והוא ייחרט בדיוק כפי שהוא נראה כאן, ללא סקיצה נוספת לאישור.</p>
+    <p class="dhe-save-note" data-el="saveNote">בלחיצה על הכפתור אני מאשר/ת שזהו העיצוב הסופי לחריטה — הטקסט, האיות, הגופן והמיקום נכונים, והוא ייחרט בדיוק כפי שהוא נראה כאן, ללא סקיצה נוספת לאישור.</p>
     <div class="dhe-status" data-el="status" aria-live="polite" hidden></div>
   </div>
   ${test ? `<details class="dhe-settings">
@@ -601,6 +630,84 @@
       return lay;
     }
 
+    // ------------------------------------------------ customer image upload
+    // The customer's own logo/photo. Stage 1: no conversion — it is shown in an
+    // automatic "engraving look" (dark parts engraved, light parts left bare),
+    // placed and sized like a symbol, and the original file is stored with the
+    // design for the designer, who prepares it and confirms with the customer.
+    const IMG_OPT = bridge.imageOption();          // { name, yes, price } or null
+    const UPL_KEY = 'dh-editor-upl-';
+    const UPLOADS = new Map();                     // id -> { id, name, type, blob, disp, w, h, ink:{} }
+    let imgOptTouched = false;
+
+    const loadImg = src => new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = src; });
+    function fitCanvas(img, max) {
+      const w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+      const sc = Math.min(1, max / Math.max(w, h));
+      const c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round(w * sc)); c.height = Math.max(1, Math.round(h * sc));
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      return c;
+    }
+    const canvasBlob = (c, type, q) => new Promise(res => c.toBlob(res, type, q));
+    const blobToDataURL = b => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(b); });
+
+    // Engraving look in the surface colour: alpha = darkness (over white).
+    function inkCanvas(u, color) {
+      if (u.ink[color]) return u.ink[color];
+      const src = u.disp, c = document.createElement('canvas');
+      c.width = src.width; c.height = src.height;
+      const g = c.getContext('2d');
+      g.drawImage(src, 0, 0);
+      const d = g.getImageData(0, 0, c.width, c.height), p = d.data;
+      const hex = color.replace('#', ''), full = hex.length === 3 ? hex.split('').map(x => x + x).join('') : hex.slice(0, 6);
+      const R = parseInt(full.slice(0, 2), 16), G = parseInt(full.slice(2, 4), 16), B = parseInt(full.slice(4, 6), 16);
+      for (let i = 0; i < p.length; i += 4) {
+        const a = p[i + 3] / 255;
+        const L = (0.299 * p[i] + 0.587 * p[i + 1] + 0.114 * p[i + 2]) * a + 255 * (1 - a);
+        p[i] = R; p[i + 1] = G; p[i + 2] = B; p[i + 3] = Math.round(Math.min(255, Math.max(0, (255 - L) * 1.15)));
+      }
+      g.putImageData(d, 0, 0);
+      return (u.ink[color] = c);
+    }
+
+    async function registerUpload(id, name, type, blob, persist) {
+      const url = URL.createObjectURL(blob);
+      try {
+        const img = await loadImg(url);
+        const u = { id, name, type, blob, disp: fitCanvas(img, 900), w: img.naturalWidth, h: img.naturalHeight, ink: {} };
+        UPLOADS.set(id, u);
+        if (persist) {
+          // A smaller copy survives a page reload (the draft); best effort.
+          try {
+            const small = await canvasBlob(fitCanvas(img, 1600), 'image/jpeg', 0.9);
+            localStorage.setItem(UPL_KEY + id, JSON.stringify({ name, type, data: await blobToDataURL(small) }));
+          } catch (e) { /* storage full — fine, it just won't survive a reload */ }
+        }
+        return u;
+      } finally { URL.revokeObjectURL(url); }
+    }
+    async function restoreUpload(id) {
+      if (UPLOADS.has(id)) return true;
+      try {
+        const raw = JSON.parse(localStorage.getItem(UPL_KEY + id) || 'null');
+        if (!raw || !raw.data) return false;
+        const blob = await (await fetch(raw.data)).blob();
+        await registerUpload(id, raw.name, blob.type || 'image/jpeg', blob, false);
+        return true;
+      } catch (e) { return false; }
+    }
+    function pruneUploads() {
+      const keep = new Set(allObjects().filter(o => o.type === 'image').map(o => o.upl));
+      try {
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+          const k = localStorage.key(i);
+          if (k && k.indexOf(UPL_KEY) === 0 && !keep.has(k.slice(UPL_KEY.length))) localStorage.removeItem(k);
+        }
+      } catch (e) { /* ignore */ }
+    }
+    const imageObjs = () => allObjects().filter(o => o.type === 'image');
+
     // ---------------------------------------------------------- canvas
 
     const CTRL = {
@@ -611,8 +718,28 @@
     };
 
     function buildFabric(o) {
-      const s = surf(), lay = layoutFor(o);
+      const s = surf();
       let fo;
+      if (o.type === 'image') {
+        // A box in mm whose own render paints the customer's image (engraving
+        // look). Its width IS widthMm, so the size/scale logic is the same as
+        // for symbols.
+        const u = UPLOADS.get(o.upl);
+        const ink = u ? inkCanvas(u, s.engrave.color) : null, op = s.engrave.opacity;
+        fo = new fabric.Rect(Object.assign({}, CTRL, { width: o.widthMm, height: o.widthMm * o.aspect, fill: 'rgba(0,0,0,0)', left: o.cx, top: o.cy }));
+        fo._render = function (ctx) {
+          const w = this.width, h = this.height;
+          if (ink) { const ga = ctx.globalAlpha; ctx.globalAlpha = ga * op; ctx.drawImage(ink, -w / 2, -h / 2, w, h); ctx.globalAlpha = ga; }
+          ctx.lineWidth = 1 / Math.max(k, 0.01); ctx.setLineDash([3 / k, 2 / k]); ctx.strokeStyle = 'rgba(143,111,51,0.55)';
+          ctx.strokeRect(-w / 2, -h / 2, w, h); ctx.setLineDash([]);
+        };
+        fo.dhIc = { x: 0, y: 0 };
+        fo.setControlsVisibility({ mt: false, mb: false, ml: false, mr: false, mtr: false });
+        if (COARSE) { fo.hasControls = false; fo.borderScaleFactor = 2.5; }
+        fo.dhId = o.id;
+        return fo;
+      }
+      const lay = layoutFor(o);
       if (lay.polys.length) {
         fo = new fabric.Path(EE.polysToPathD(lay.polys, 3), Object.assign({}, CTRL, {
           fill: s.engrave.color, opacity: s.engrave.opacity, fillRule: 'evenodd',
@@ -658,6 +785,7 @@
       let sMin = 0.05;
       if (o && o.type === 'text') sMin = 2 / o.sizeMm;
       if (o && o.type === 'symbol') sMin = 3 / o.widthMm;
+      if (o && o.type === 'image') sMin = 5 / o.widthMm;
       return Math.max(sMin, Math.min(sMax, sc));
     }
     function commitScale(fo) {
@@ -1014,13 +1142,14 @@
       E.panelEmpty.hidden = !!o;
       E.panelText.hidden = !(o && o.type === 'text');
       E.panelSym.hidden = !(o && o.type === 'symbol');
+      E.panelImg.hidden = !(o && o.type === 'image');
       // Selecting/tapping any object collapses the "בחרו סמל" picker grid,
       // so it doesn't linger over the text panel and confuse the customer.
       if (o) { E.symPanel.hidden = true; E.btnAddSym.setAttribute('aria-expanded', 'false'); }
       if (!o) { editId = null; updateReadout(); return; }
       if (o.type === 'text') {
         if (reset || editId !== o.id) buildFontChips(o); else updateFontChips(o);
-      } else {
+      } else if (o.type === 'symbol') {
         E.symTitle.textContent = 'סמל: ' + symLabel(o.symbol);
       }
       editId = o.id;
@@ -1094,6 +1223,46 @@
       E.btnAddSym.setAttribute('aria-expanded', 'false');
       syncPanel(true);
       afterChange(true);
+    }
+
+    // Customer image: one per order (one paid upgrade). `replaceObj` swaps the
+    // file of an image already placed, keeping its spot and width.
+    let replaceObj = null;
+    async function addImageFile(file) {
+      if (!file) return;
+      if (!/^image\//.test(file.type || '') && !/\.(png|jpe?g|webp|gif)$/i.test(file.name || '')) { toast('אפשר להעלות קובץ תמונה בלבד (JPG או PNG)'); return; }
+      if (file.size > 25 * 1024 * 1024) { toast('הקובץ גדול מדי (עד 25MB)'); return; }
+      const target = replaceObj; replaceObj = null;
+      if (!target && imageObjs().length) { toast('אפשר לוגו / תמונה אחת. כדי להחליף, בחרו אותה ולחצו "החלפת קובץ".'); return; }
+      toast('מעלה את הקובץ…');
+      let u;
+      try {
+        // Keep the original when it is a small JPG/PNG; otherwise a high-quality copy.
+        let blob = file, type = file.type;
+        if (!(/^image\/(png|jpeg)$/.test(type) && file.size <= 2.8 * 1024 * 1024)) {
+          const url = URL.createObjectURL(file);
+          try {
+            const img = await loadImg(url);
+            const c = fitCanvas(img, 2400);
+            blob = await canvasBlob(c, 'image/jpeg', 0.92); type = 'image/jpeg';
+          } finally { URL.revokeObjectURL(url); }
+        }
+        u = await registerUpload(uid(), file.name || 'logo', type, blob, true);
+      } catch (e) { toast('לא הצלחנו לקרוא את הקובץ. נסו קובץ JPG או PNG.'); return; }
+      const s = surf(), A = s.areaMm, aspect = u.h / u.w;
+      let o = target && findObj(target.id);
+      if (o) {
+        o.upl = u.id; o.aspect = aspect; o.name = u.name;
+      } else {
+        const widthMm = round2(Math.min(A.w * 0.6, (A.h * 0.7) / aspect));
+        o = { id: uid(), type: 'image', upl: u.id, name: u.name, aspect, widthMm, ...freeSpot(A) };
+        cur().objects.push(o);
+      }
+      placeObject(o, { select: true });
+      syncPanel(true);
+      afterChange(true);
+      pruneUploads();
+      toast(IMG_OPT && IMG_OPT.price ? `הקובץ נוסף · ${IMG_OPT.price} נוספו להזמנה` : 'הקובץ נוסף');
     }
 
     function deleteActive() {
@@ -1246,7 +1415,7 @@
       for (const s of SURFACES) {
         let texts = 0;
         for (const o of state.surfaces[s.key].objects) {
-          if (o.type === 'symbol') { total++; continue; }
+          if (o.type === 'symbol' || o.type === 'image') { total++; continue; }
           if (!o.text.trim()) continue;
           total++; texts++;
           const lay = layoutFor(o);
@@ -1273,7 +1442,7 @@
 
     function surfaceHasContent(s) {
       return state.surfaces[s.key].objects.some(o =>
-        (o.type === 'text' && String(o.text || '').trim()) || o.type === 'symbol');
+        (o.type === 'text' && String(o.text || '').trim()) || o.type === 'symbol' || o.type === 'image');
     }
 
     function syncToPage() {
@@ -1290,6 +1459,17 @@
       for (const s of SURFACES) {
         if (s.gate) bridge.setSideOption(s.gate.nameIncludes, s.gate.yesIncludes, surfaceHasContent(s));
       }
+      // Customer image -> the paid "attach image/logo" option. Only touched once
+      // the editor placed an image, so a customer who picks that option on the
+      // site by hand (to upload at checkout) is left alone.
+      const hasImg = imageObjs().length > 0;
+      if (IMG_OPT && (hasImg || imgOptTouched)) {
+        bridge.setSideOption(IMG_OPT.name, IMG_OPT.yes, hasImg);
+        imgOptTouched = hasImg;
+      }
+      E.saveNote.textContent = hasImg
+        ? 'בלחיצה על הכפתור אני מאשר/ת את הטקסט, הגופן והמיקום. הלוגו / התמונה שהעליתי יעברו לבדיקת המעצב שלנו, שיכין אותם לחריטה ויאשר איתי לפני הביצוע.'
+        : 'בלחיצה על הכפתור אני מאשר/ת שזהו העיצוב הסופי לחריטה — הטקסט, האיות, הגופן והמיקום נכונים, והוא ייחרט בדיוק כפי שהוא נראה כאן, ללא סקיצה נוספת לאישור.';
     }
     let syncTimer = null;
     const scheduleSync = () => { clearTimeout(syncTimer); syncTimer = setTimeout(syncToPage, 400); };
@@ -1359,6 +1539,7 @@
           for (const o of objs) {
             if (o.type === 'text' && (typeof o.text !== 'string' || !FONTS.some(f => f.id === o.font))) return null;
             if (o.type === 'symbol' && !SYMBOLS.some(x => x.id === o.symbol)) return null;
+            if (o.type === 'image' && (typeof o.upl !== 'string' || !(o.widthMm > 0) || !(o.aspect > 0))) return null;
           }
         }
         if (!SURFACES.some(s => s.key === d.current)) d.current = SURFACES[0].key;
@@ -1404,7 +1585,7 @@
       return [...r].map(n => abc[n % abc.length]).join('');
     }
 
-    function previewBlob(s, polys) {
+    function previewBlob(s, polys, objs) {
       const img = s.img.el;
       const c = document.createElement('canvas');
       c.width = s.img.w; c.height = s.img.h;
@@ -1416,13 +1597,21 @@
       g.globalAlpha = s.engrave.opacity;
       g.fillStyle = s.engrave.color;
       if (polys.length) g.fill(new Path2D(EE.polysToPathD(polys, 3)), 'evenodd');
+      for (const o of (objs || [])) {
+        const u = o.type === 'image' && UPLOADS.get(o.upl);
+        if (!u) continue;
+        const w = o.widthMm, h = o.widthMm * o.aspect;
+        g.drawImage(inkCanvas(u, s.engrave.color), o.cx - w / 2, o.cy - h / 2, w, h);
+      }
       return new Promise(res => c.toBlob(res, 'image/jpeg', 0.88));
     }
 
+    // Engraving geometry (text + built-in symbols). A customer image has no
+    // vectors yet (stage 1) — it is in `objs` for the preview/JSON only.
     function surfacePolys(s) {
       const objs = state.surfaces[s.key].objects.filter(o => o.type !== 'text' || o.text.trim());
       const all = [];
-      for (const o of objs) all.push(...EE.translate(layoutFor(o).polys, o.cx, o.cy));
+      for (const o of objs) if (o.type !== 'image') all.push(...EE.translate(layoutFor(o).polys, o.cx, o.cy));
       return { objs, polys: EE.union(all, 'nonzero') };
     }
 
@@ -1437,14 +1626,25 @@
         const area = { w: s.areaMm.w, h: s.areaMm.h, shape: s.area.shape };
         files.push({ name: `${id}_${s.fileLabel}.dxf`, data: EE.toDXF(polys, area, { origin, guide }) });
         files.push({ name: `${id}_${s.fileLabel}.svg`, data: EE.toSVG(polys, area, { guide }) });
-        files.push({ name: `${id}_${s.fileLabel}_preview.jpg`, data: await previewBlob(s, polys) });
+        files.push({ name: `${id}_${s.fileLabel}_preview.jpg`, data: await previewBlob(s, polys, objs) });
+        const imgFiles = {};
+        for (const o of objs) {
+          const u = o.type === 'image' && UPLOADS.get(o.upl);
+          if (!u || imgFiles[o.id]) continue;
+          const ext = /png/.test(u.type) ? 'png' : 'jpg';
+          imgFiles[o.id] = `${id}_${s.fileLabel}_logo.${ext}`;
+          files.push({ name: imgFiles[o.id], data: u.blob });
+        }
         design.surfaces.push({
           key: s.key, fileLabel: s.fileLabel, areaMm: s.areaMm,
           objects: objs.map(o => o.type === 'text'
             ? { type: 'text', text: o.text, font: o.font, fontLabel: fontLabel(o.font), sizeMm: o.sizeMm, align: o.align, lineSpacing: o.lineSpacing, cxMm: round2(o.cx), cyMm: round2(o.cy) }
-            : { type: 'symbol', symbol: o.symbol, symbolLabel: symLabel(o.symbol), widthMm: o.widthMm, cxMm: round2(o.cx), cyMm: round2(o.cy) }),
+            : o.type === 'image'
+              ? { type: 'image', file: imgFiles[o.id] || null, originalName: o.name || '', widthMm: round2(o.widthMm), heightMm: round2(o.widthMm * o.aspect), cxMm: round2(o.cx), cyMm: round2(o.cy), note: 'קובץ של הלקוח — להכנה ידנית ואישור מול הלקוח' }
+              : { type: 'symbol', symbol: o.symbol, symbolLabel: symLabel(o.symbol), widthMm: o.widthMm, cxMm: round2(o.cx), cyMm: round2(o.cy) }),
         });
       }
+      design.customerImage = imageObjs().length > 0;
       files.push({ name: `${id}_design.json`, data: JSON.stringify(design, null, 2) });
       return files;
     }
@@ -1489,8 +1689,11 @@
       setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
     }
 
-    const designFieldText = (id, res) => `עוצב ע״י הלקוח - אין צורך בסקיצה · קוד ${id}`
-      + (res && res.view ? ` · ${res.view}` : '')
+    // With a customer image the designer must check it, so the order says so first.
+    // The order field holds ~100 characters: the link already carries the code,
+    // so the code is written separately only when there is no link.
+    const designFieldText = (id, res) => (imageObjs().length ? '⚠ כולל לוגו/תמונה של הלקוח – לבדיקת מעצב' : 'עוצב ע״י הלקוח - אין צורך בסקיצה')
+      + ` · ${designMeta(id, res).view}`
       + (test ? ' · בדיקה' : '');
     const designMeta = (id, res) => ({ code: id, view: (res && res.view) || `${API_BASE}/d/${id}` });
 
@@ -1658,6 +1861,15 @@
       E.btnEditTxt.addEventListener('click', () => startEdit(activeModel()));
       E.tDelete.addEventListener('click', deleteActive);
       E.sDelete.addEventListener('click', deleteActive);
+      // customer image (only when the product sells the "attach image/logo" upgrade)
+      if (IMG_OPT) {
+        E.btnAddImg.hidden = false;
+        E.btnAddImg.textContent = '+ לוגו / תמונה' + (IMG_OPT.price ? ` (${IMG_OPT.price})` : '');
+        E.btnAddImg.addEventListener('click', () => { replaceObj = null; E.imgFile.value = ''; E.imgFile.click(); });
+        E.iReplace.addEventListener('click', () => { replaceObj = activeModel(); E.imgFile.value = ''; E.imgFile.click(); });
+        E.iDelete.addEventListener('click', deleteActive);
+        E.imgFile.addEventListener('change', () => addImageFile(E.imgFile.files && E.imgFile.files[0]));
+      }
       E.btnSave.addEventListener('click', save);
       E.btnForMe.addEventListener('click', () => ctx.onClose());
       if (E.btnReset) E.btnReset.addEventListener('click', () => {
@@ -1684,6 +1896,14 @@
         savedId = draft.savedId || null;
       } else {
         state.surfaces = initialDesign();
+      }
+      // customer images of a draft come back from the browser's copy; one that
+      // can't be restored is dropped (the customer can upload it again)
+      for (const s of SURFACES) {
+        const objs = state.surfaces[s.key].objects;
+        for (const o of objs.filter(x => x.type === 'image')) {
+          if (!(await restoreUpload(o.upl))) state.surfaces[s.key].objects = state.surfaces[s.key].objects.filter(x => x !== o);
+        }
       }
       const used = new Set([DEFAULT_FONT, lastFont]);
       for (const o of allObjects()) if (o.type === 'text') used.add(o.font);
@@ -1715,6 +1935,9 @@
         clearTimeout(syncTimer);
         syncToPage();
         bridge.setDesignField('');
+        // "עצבו בשבילי": the image placed here won't reach the order, so drop the
+        // paid option we picked (it comes back if they return to the editor)
+        if (IMG_OPT && imgOptTouched) { bridge.setSideOption(IMG_OPT.name, IMG_OPT.yes, false); imgOptTouched = false; }
         for (const s of SURFACES) bridge.updateDanWrap(s.danWrap, linesOf(s));
         pushHistory();
       },

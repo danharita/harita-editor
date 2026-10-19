@@ -1,4 +1,4 @@
-/* Dan Harita design editor 202610191843 */
+/* Dan Harita design editor 202610192056 */
 /*
  * EngraveEngine — turns text and symbols into engraving outlines (mm),
  * and writes DXF (R12) and SVG. The same outlines drive the on-screen
@@ -604,7 +604,7 @@
   const EE = window.EngraveEngine;
   const SYMBOLS = window.DEMO_SYMBOLS;
   const CSS_TEXT = '.dhe { --ground: #f6f4f0; --surface: #ffffff; --surface-2: #f7f5f1; --ink: #1d1a16; --muted: #6b645a; --line: #e0dbd2; --accent: #8f6f33; --accent-ink: #ffffff; --accent-soft: #f2eadb; --brand: #c8a96e; --danger: #b3261e; --danger-soft: #fbeae8; --stage: #e7e3dc; --focus: #2f6fd6; --ok: #1e7b3a; direction: rtl; text-align: right; color: var(--ink); font-family: inherit; font-size: 16px; line-height: 1.4; display: grid; gap: 12px; margin: 12px 0 20px; padding: 12px; background: var(--ground); border: 1px solid var(--line); border-radius: 14px; box-sizing: border-box; width: 100%; max-width: 760px; } .dhe *, .dhe *::before, .dhe *::after { box-sizing: border-box; } .dhe [hidden] { display: none !important; } .dhe button, .dhe textarea, .dhe input, .dhe output { font-family: inherit; color: inherit; margin: 0; text-transform: none; letter-spacing: normal; box-shadow: none; background-image: none; float: none; text-shadow: none; } .dhe button { cursor: pointer; line-height: 1.2; -webkit-tap-highlight-color: transparent; } .dhe :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; } .dhe p { margin: 0; } .dhe h2 { margin: 0; font-size: 13px; font-weight: 700; letter-spacing: .02em; color: var(--muted); line-height: 1.3; } .dhe .dhe-btn { min-height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); font-weight: 600; font-size: 16px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: auto; height: auto; } .dhe .dhe-btn:hover { border-color: var(--accent); } .dhe .dhe-btn:disabled { opacity: .45; cursor: default; border-color: var(--line); } .dhe .dhe-btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); } .dhe .dhe-btn.primary:hover { filter: brightness(1.06); } .dhe .dhe-btn.danger { color: var(--danger); } .dhe .dhe-btn.icon { width: 44px; padding: 0; } .dhe .dhe-btn svg { width: 20px; height: 20px; } .dhe .dhe-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; } .dhe .dhe-bar .grow { flex: 1; min-width: 0; } .dhe .dhe-save { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); } .dhe .dhe-save .dhe-save-btn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 62px; padding: 16px 20px; font-size: 18px; font-weight: 800; border-radius: 14px; box-shadow: 0 4px 16px rgba(143,111,51,.30); } .dhe .dhe-save .dhe-save-btn svg { width: 24px; height: 24px; flex: 0 0 auto; } .dhe .dhe-save-note { margin: 11px 4px 0; font-size: 13px; line-height: 1.45; color: var(--muted); text-align: center; } .dhe .dhe-status { font-size: 14px; color: var(--muted); font-weight: 600; margin-top: 8px; text-align: center; } .dhe .dhe-status.ok { color: var(--ok); } .dhe .dhe-status.dirty { color: var(--accent); } .dhe .dhe-test { font-size: 12px; font-weight: 700; color: var(--accent); background: var(--accent-soft); border-radius: 999px; padding: 2px 9px; } .dhe .dhe-tabs { display: inline-flex; background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 3px; gap: 3px; justify-self: start; } .dhe .dhe-tabs button { min-height: 38px; padding: 0 16px; border: 0; border-radius: 9px; background: transparent; font-weight: 600; font-size: 15px; color: var(--muted); } .dhe .dhe-tabs button[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.12); } .dhe .dhe-tabs .count { font-weight: 400; color: var(--muted); } .dhe .dhe-stage-wrap { display: grid; gap: 6px; justify-items: center; } .dhe .dhe-stage { position: relative; width: 100%; background: var(--stage); border-radius: 12px; overflow: hidden; } .dhe .dhe-stage img.dhe-bg { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; display: block; margin: 0; user-select: none; -webkit-user-drag: none; pointer-events: none; border: 0; } .dhe .dhe-stage .canvas-container { position: absolute !important; inset: 0; } .dhe .dhe-stage canvas { max-width: none !important; max-height: none !important; } .dhe .dhe-loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font-weight: 600; background: var(--stage); text-align: center; padding: 16px; z-index: 2; } .dhe .dhe-readout { width: 100%; display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; font-size: 13px; color: var(--muted); min-height: 18px; } .dhe .dhe-readout strong { color: var(--ink); font-weight: 600; } .dhe .dhe-quick { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 6px; } .dhe .dhe-size { display: inline-flex; align-items: stretch; border: 2px solid var(--accent); border-radius: 12px; overflow: hidden; background: var(--surface); box-shadow: 0 1px 3px rgba(0,0,0,.12); } .dhe .dhe-size button { width: 60px; min-height: 52px; border: 0; background: var(--accent-soft); color: var(--accent); font-size: 30px; font-weight: 700; line-height: 1; padding: 0; touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; } .dhe .dhe-size button:active { background: var(--accent); color: var(--accent-ink); } .dhe .dhe-size-label { display: inline-flex; align-items: center; justify-content: center; min-width: 96px; padding: 0 14px; font-size: 18px; font-weight: 700; color: var(--ink); } .dhe .dhe-fine { color: var(--muted); font-size: 13px; } .dhe .dhe-toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; } .dhe .dhe-toolbar .grow { flex: 1; } .dhe .dhe-panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: grid; gap: 12px; } .dhe .dhe-hint { color: var(--muted); font-size: 15px; } .dhe .dhe-edit { position: absolute; top: 6px; left: 6px; right: 6px; z-index: 6; display: flex; gap: 6px; align-items: flex-start; } .dhe .dhe-edit textarea { flex: 1; min-width: 0; min-height: 46px; box-sizing: border-box; border: 2px solid var(--accent); border-radius: 10px; background: rgba(255, 255, 255, 0.95); color: #1d1a16; padding: 9px 12px; font-size: 18px; line-height: 1.35; resize: none; overflow: auto; unicode-bidi: plaintext; text-align: center; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22); } .dhe .dhe-edit textarea:focus { outline: none; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22), 0 0 0 3px var(--accent-soft); } .dhe .dhe-edit textarea::placeholder { color: #8d857a; } .dhe .dhe-edit button { width: 46px; min-height: 46px; border: 0; border-radius: 10px; background: var(--accent); color: var(--accent-ink); font-size: 20px; font-weight: 700; padding: 0; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22); } .dhe .dhe-fonts { display: grid; gap: 8px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; -webkit-overflow-scrolling: touch; } .dhe .dhe-fonts::-webkit-scrollbar { display: none; } .dhe .dhe-fonts.dhe-dragging { cursor: grabbing; } .dhe .dhe-fonts.dhe-dragging .dhe-chip { pointer-events: none; } /* gentle, always-visible scrollbar under the fonts (shows there are more) */ .dhe .dhe-fontscroll { position: relative; height: 4px; border-radius: 999px; background: var(--accent-soft); margin: 6px 6px 0; } .dhe .dhe-fontscroll-thumb { position: absolute; top: 0; height: 100%; min-width: 20%; border-radius: 999px; background: var(--accent); opacity: .5; cursor: grab; touch-action: none; } .dhe .dhe-fontscroll-thumb:active { cursor: grabbing; opacity: .75; } .dhe .dhe-font-row { display: flex; gap: 8px; width: max-content; } .dhe .dhe-chip { flex: 0 0 96px; min-height: 52px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); padding: 5px 8px; display: grid; gap: 1px; text-align: center; cursor: pointer; } .dhe .dhe-chip .sample { font-size: 18px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; unicode-bidi: plaintext; } .dhe .dhe-chip .name { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .dhe .dhe-chip[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); box-shadow: inset 0 0 0 1px var(--accent); } .dhe .dhe-chip.warn .name { color: var(--danger); } .dhe .dhe-chip.loading { opacity: .55; } .dhe .dhe-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; } .dhe .dhe-stepper { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--surface); } .dhe .dhe-stepper button { width: 44px; min-height: 42px; border: 0; background: var(--surface-2); font-size: 20px; font-weight: 700; padding: 0; touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; } .dhe .dhe-stepper button:active { background: var(--accent-soft); } .dhe .dhe-stepper output { min-width: 128px; text-align: center; font-size: 14px; padding: 0 6px; } .dhe .dhe-seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; } .dhe .dhe-seg button { min-height: 42px; padding: 0 12px; border: 0; background: var(--surface-2); font-weight: 600; font-size: 14px; } .dhe .dhe-seg button + button { border-inline-start: 1px solid var(--line); } .dhe .dhe-seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); } .dhe .dhe-symbols { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; } .dhe .dhe-sym { border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); padding: 10px 6px 6px; display: grid; gap: 4px; justify-items: center; font-size: 13px; color: var(--muted); } .dhe .dhe-sym svg { width: 44px; height: 38px; color: var(--ink); } .dhe .dhe-sym:hover { border-color: var(--accent); } .dhe .dhe-nudge { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; } .dhe .dhe-nudge-label { font-size: 13px; font-weight: 600; color: var(--muted); margin-inline-end: 4px; } .dhe .dhe-nudge button { width: 44px; height: 44px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); display: inline-grid; place-items: center; padding: 0; touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; } .dhe .dhe-nudge button.wide { width: auto; padding: 0 14px; font-weight: 600; font-size: 14px; } .dhe .dhe-nudge button svg { width: 20px; height: 20px; } .dhe .dhe-nudge button:active { background: var(--accent-soft); border-color: var(--accent); } .dhe .dhe-issues { padding: 10px 14px; background: var(--danger-soft); color: var(--danger); border-radius: 10px; display: grid; gap: 4px; font-size: 14px; font-weight: 600; } .dhe details.dhe-settings { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 0 14px; } .dhe details.dhe-settings summary { min-height: 44px; display: flex; align-items: center; font-weight: 600; cursor: pointer; font-size: 15px; } .dhe details.dhe-settings .body { display: grid; gap: 10px; padding-bottom: 14px; font-size: 15px; } .dhe details.dhe-settings label { display: flex; gap: 8px; align-items: center; font-weight: 400; margin: 0; } .dhe details.dhe-settings input { width: 18px; height: 18px; accent-color: var(--accent); } .dhe .dhe-toast { position: fixed; left: 16px; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); margin: 0 auto; max-width: 520px; background: var(--ink); color: #fff; border-radius: 12px; padding: 12px 16px; font-weight: 600; font-size: 15px; box-shadow: 0 6px 24px rgba(0,0,0,.25); transition: opacity .2s, transform .2s; z-index: 2147483000; opacity: 0; transform: translateY(8px); pointer-events: none; text-align: center; } .dhe .dhe-toast.show { opacity: 1; transform: none; } @media (prefers-reduced-motion: reduce) { .dhe .dhe-toast { transition: none; } } @media (max-width: 420px) { .dhe { padding: 10px; } .dhe .dhe-stepper output { min-width: 108px; } .dhe .dhe-bar .dhe-btn { padding: 0 12px; } } ';
-  const VERSION = '202610191843';
+  const VERSION = '202610192056';
 
   // ------------------------------------------------------------------ config
 
@@ -935,9 +935,30 @@
           return !!t;
         }
         const opts = [...o.el.options];
-        const t = yes ? opts.find(isYes) : opts.find(op => !isYes(op) && op.value && op.value !== '0');
+        // "off" with no free choice listed (e.g. the logo upgrade): back to the
+        // empty "--- … ---" placeholder.
+        const t = yes ? opts.find(isYes)
+          : (opts.find(op => !isYes(op) && op.value && op.value !== '0') || opts.find(op => !op.value || op.value === '0'));
         if (t && o.el.value !== t.value) { o.el.value = t.value; fire(o.el); }
         return !!t;
+      },
+      // The paid "attach an image / logo" option, if the product has one:
+      // { name, yes, price } — yes = the exact text of its priced choice.
+      imageOption() {
+        const isImg = n => /תמונה|לוגו/.test(n || '');
+        const els = [...form.querySelectorAll('select.clsSelectChooseProduct, ul.clsUlChooseProduct')]
+          .filter(el => isImg(el.getAttribute('property_name')));
+        for (const el of els) {
+          const items = el.tagName === 'SELECT' ? [...el.options] : [...el.querySelectorAll('li.clsLIChooseProduct')];
+          const paid = items.find(x => /₪\s?\d|\d\s?₪/.test(x.textContent || ''));
+          if (paid) {
+            const yes = (paid.textContent || '').replace(/\s+/g, ' ').trim();
+            const price = (yes.match(/₪\s?[\d,]+|[\d,]+\s?₪/) || [''])[0].replace(/\s/g, '');
+            // match the choice by its price — the site's text has odd spacing
+            return { name: el.getAttribute('property_name'), yes: price || yes, label: yes, price };
+          }
+        }
+        return null;
       },
 
       checkedSymbols: () => symBoxes().filter(cb => cb.checked).map(symLabel),
@@ -1115,6 +1136,8 @@
   <div class="dhe-toolbar">
     <button class="dhe-btn" data-el="btnAddText" type="button">+ טקסט</button>
     <button class="dhe-btn" data-el="btnAddSym" type="button" aria-expanded="false">+ סמל</button>
+    <button class="dhe-btn" data-el="btnAddImg" type="button" hidden>+ לוגו / תמונה</button>
+    <input type="file" data-el="imgFile" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
     <span class="grow"></span>
     <button class="dhe-btn icon" data-el="btnUndo" type="button" aria-label="ביטול" title="ביטול"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7l5 5-5 5"/><path d="M20 12H9a5 5 0 0 0 0 10h2"/></svg></button>
     <button class="dhe-btn icon" data-el="btnRedo" type="button" aria-label="חזרה" title="חזרה"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7l-5 5 5 5"/><path d="M4 12h11a5 5 0 0 1 0 10h-2"/></svg></button>
@@ -1136,10 +1159,16 @@
     <div class="dhe-row"><button class="dhe-btn danger" data-el="sDelete" type="button">מחיקה</button></div>
     ${nudgeRow()}
   </section>
+  <section class="dhe-panel" data-el="panelImg" hidden>
+    <h2>הלוגו / התמונה שלכם</h2>
+    <p class="dhe-hint">המעצב שלנו יכין את הקובץ לחריטה ויאשר אותו איתכם לפני הביצוע. כאן קובעים את הגודל והמיקום.</p>
+    <div class="dhe-row"><button class="dhe-btn" data-el="iReplace" type="button">החלפת קובץ</button><button class="dhe-btn danger" data-el="iDelete" type="button">מחיקה</button></div>
+    ${nudgeRow()}
+  </section>
   <div class="dhe-issues" data-el="issues" hidden aria-live="polite"></div>
   <div class="dhe-save">
     <button class="dhe-btn primary dhe-save-btn" data-el="btnSave" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg><span>אישור סופי של העיצוב</span></button>
-    <p class="dhe-save-note">בלחיצה על הכפתור אני מאשר/ת שזהו העיצוב הסופי לחריטה — הטקסט, האיות, הגופן והמיקום נכונים, והוא ייחרט בדיוק כפי שהוא נראה כאן, ללא סקיצה נוספת לאישור.</p>
+    <p class="dhe-save-note" data-el="saveNote">בלחיצה על הכפתור אני מאשר/ת שזהו העיצוב הסופי לחריטה — הטקסט, האיות, הגופן והמיקום נכונים, והוא ייחרט בדיוק כפי שהוא נראה כאן, ללא סקיצה נוספת לאישור.</p>
     <div class="dhe-status" data-el="status" aria-live="polite" hidden></div>
   </div>
   ${test ? `<details class="dhe-settings">
@@ -1195,6 +1224,84 @@
       return lay;
     }
 
+    // ------------------------------------------------ customer image upload
+    // The customer's own logo/photo. Stage 1: no conversion — it is shown in an
+    // automatic "engraving look" (dark parts engraved, light parts left bare),
+    // placed and sized like a symbol, and the original file is stored with the
+    // design for the designer, who prepares it and confirms with the customer.
+    const IMG_OPT = bridge.imageOption();          // { name, yes, price } or null
+    const UPL_KEY = 'dh-editor-upl-';
+    const UPLOADS = new Map();                     // id -> { id, name, type, blob, disp, w, h, ink:{} }
+    let imgOptTouched = false;
+
+    const loadImg = src => new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = src; });
+    function fitCanvas(img, max) {
+      const w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+      const sc = Math.min(1, max / Math.max(w, h));
+      const c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round(w * sc)); c.height = Math.max(1, Math.round(h * sc));
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      return c;
+    }
+    const canvasBlob = (c, type, q) => new Promise(res => c.toBlob(res, type, q));
+    const blobToDataURL = b => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(b); });
+
+    // Engraving look in the surface colour: alpha = darkness (over white).
+    function inkCanvas(u, color) {
+      if (u.ink[color]) return u.ink[color];
+      const src = u.disp, c = document.createElement('canvas');
+      c.width = src.width; c.height = src.height;
+      const g = c.getContext('2d');
+      g.drawImage(src, 0, 0);
+      const d = g.getImageData(0, 0, c.width, c.height), p = d.data;
+      const hex = color.replace('#', ''), full = hex.length === 3 ? hex.split('').map(x => x + x).join('') : hex.slice(0, 6);
+      const R = parseInt(full.slice(0, 2), 16), G = parseInt(full.slice(2, 4), 16), B = parseInt(full.slice(4, 6), 16);
+      for (let i = 0; i < p.length; i += 4) {
+        const a = p[i + 3] / 255;
+        const L = (0.299 * p[i] + 0.587 * p[i + 1] + 0.114 * p[i + 2]) * a + 255 * (1 - a);
+        p[i] = R; p[i + 1] = G; p[i + 2] = B; p[i + 3] = Math.round(Math.min(255, Math.max(0, (255 - L) * 1.15)));
+      }
+      g.putImageData(d, 0, 0);
+      return (u.ink[color] = c);
+    }
+
+    async function registerUpload(id, name, type, blob, persist) {
+      const url = URL.createObjectURL(blob);
+      try {
+        const img = await loadImg(url);
+        const u = { id, name, type, blob, disp: fitCanvas(img, 900), w: img.naturalWidth, h: img.naturalHeight, ink: {} };
+        UPLOADS.set(id, u);
+        if (persist) {
+          // A smaller copy survives a page reload (the draft); best effort.
+          try {
+            const small = await canvasBlob(fitCanvas(img, 1600), 'image/jpeg', 0.9);
+            localStorage.setItem(UPL_KEY + id, JSON.stringify({ name, type, data: await blobToDataURL(small) }));
+          } catch (e) { /* storage full — fine, it just won't survive a reload */ }
+        }
+        return u;
+      } finally { URL.revokeObjectURL(url); }
+    }
+    async function restoreUpload(id) {
+      if (UPLOADS.has(id)) return true;
+      try {
+        const raw = JSON.parse(localStorage.getItem(UPL_KEY + id) || 'null');
+        if (!raw || !raw.data) return false;
+        const blob = await (await fetch(raw.data)).blob();
+        await registerUpload(id, raw.name, blob.type || 'image/jpeg', blob, false);
+        return true;
+      } catch (e) { return false; }
+    }
+    function pruneUploads() {
+      const keep = new Set(allObjects().filter(o => o.type === 'image').map(o => o.upl));
+      try {
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+          const k = localStorage.key(i);
+          if (k && k.indexOf(UPL_KEY) === 0 && !keep.has(k.slice(UPL_KEY.length))) localStorage.removeItem(k);
+        }
+      } catch (e) { /* ignore */ }
+    }
+    const imageObjs = () => allObjects().filter(o => o.type === 'image');
+
     // ---------------------------------------------------------- canvas
 
     const CTRL = {
@@ -1205,8 +1312,28 @@
     };
 
     function buildFabric(o) {
-      const s = surf(), lay = layoutFor(o);
+      const s = surf();
       let fo;
+      if (o.type === 'image') {
+        // A box in mm whose own render paints the customer's image (engraving
+        // look). Its width IS widthMm, so the size/scale logic is the same as
+        // for symbols.
+        const u = UPLOADS.get(o.upl);
+        const ink = u ? inkCanvas(u, s.engrave.color) : null, op = s.engrave.opacity;
+        fo = new fabric.Rect(Object.assign({}, CTRL, { width: o.widthMm, height: o.widthMm * o.aspect, fill: 'rgba(0,0,0,0)', left: o.cx, top: o.cy }));
+        fo._render = function (ctx) {
+          const w = this.width, h = this.height;
+          if (ink) { const ga = ctx.globalAlpha; ctx.globalAlpha = ga * op; ctx.drawImage(ink, -w / 2, -h / 2, w, h); ctx.globalAlpha = ga; }
+          ctx.lineWidth = 1 / Math.max(k, 0.01); ctx.setLineDash([3 / k, 2 / k]); ctx.strokeStyle = 'rgba(143,111,51,0.55)';
+          ctx.strokeRect(-w / 2, -h / 2, w, h); ctx.setLineDash([]);
+        };
+        fo.dhIc = { x: 0, y: 0 };
+        fo.setControlsVisibility({ mt: false, mb: false, ml: false, mr: false, mtr: false });
+        if (COARSE) { fo.hasControls = false; fo.borderScaleFactor = 2.5; }
+        fo.dhId = o.id;
+        return fo;
+      }
+      const lay = layoutFor(o);
       if (lay.polys.length) {
         fo = new fabric.Path(EE.polysToPathD(lay.polys, 3), Object.assign({}, CTRL, {
           fill: s.engrave.color, opacity: s.engrave.opacity, fillRule: 'evenodd',
@@ -1252,6 +1379,7 @@
       let sMin = 0.05;
       if (o && o.type === 'text') sMin = 2 / o.sizeMm;
       if (o && o.type === 'symbol') sMin = 3 / o.widthMm;
+      if (o && o.type === 'image') sMin = 5 / o.widthMm;
       return Math.max(sMin, Math.min(sMax, sc));
     }
     function commitScale(fo) {
@@ -1608,13 +1736,14 @@
       E.panelEmpty.hidden = !!o;
       E.panelText.hidden = !(o && o.type === 'text');
       E.panelSym.hidden = !(o && o.type === 'symbol');
+      E.panelImg.hidden = !(o && o.type === 'image');
       // Selecting/tapping any object collapses the "בחרו סמל" picker grid,
       // so it doesn't linger over the text panel and confuse the customer.
       if (o) { E.symPanel.hidden = true; E.btnAddSym.setAttribute('aria-expanded', 'false'); }
       if (!o) { editId = null; updateReadout(); return; }
       if (o.type === 'text') {
         if (reset || editId !== o.id) buildFontChips(o); else updateFontChips(o);
-      } else {
+      } else if (o.type === 'symbol') {
         E.symTitle.textContent = 'סמל: ' + symLabel(o.symbol);
       }
       editId = o.id;
@@ -1688,6 +1817,46 @@
       E.btnAddSym.setAttribute('aria-expanded', 'false');
       syncPanel(true);
       afterChange(true);
+    }
+
+    // Customer image: one per order (one paid upgrade). `replaceObj` swaps the
+    // file of an image already placed, keeping its spot and width.
+    let replaceObj = null;
+    async function addImageFile(file) {
+      if (!file) return;
+      if (!/^image\//.test(file.type || '') && !/\.(png|jpe?g|webp|gif)$/i.test(file.name || '')) { toast('אפשר להעלות קובץ תמונה בלבד (JPG או PNG)'); return; }
+      if (file.size > 25 * 1024 * 1024) { toast('הקובץ גדול מדי (עד 25MB)'); return; }
+      const target = replaceObj; replaceObj = null;
+      if (!target && imageObjs().length) { toast('אפשר לוגו / תמונה אחת. כדי להחליף, בחרו אותה ולחצו "החלפת קובץ".'); return; }
+      toast('מעלה את הקובץ…');
+      let u;
+      try {
+        // Keep the original when it is a small JPG/PNG; otherwise a high-quality copy.
+        let blob = file, type = file.type;
+        if (!(/^image\/(png|jpeg)$/.test(type) && file.size <= 2.8 * 1024 * 1024)) {
+          const url = URL.createObjectURL(file);
+          try {
+            const img = await loadImg(url);
+            const c = fitCanvas(img, 2400);
+            blob = await canvasBlob(c, 'image/jpeg', 0.92); type = 'image/jpeg';
+          } finally { URL.revokeObjectURL(url); }
+        }
+        u = await registerUpload(uid(), file.name || 'logo', type, blob, true);
+      } catch (e) { toast('לא הצלחנו לקרוא את הקובץ. נסו קובץ JPG או PNG.'); return; }
+      const s = surf(), A = s.areaMm, aspect = u.h / u.w;
+      let o = target && findObj(target.id);
+      if (o) {
+        o.upl = u.id; o.aspect = aspect; o.name = u.name;
+      } else {
+        const widthMm = round2(Math.min(A.w * 0.6, (A.h * 0.7) / aspect));
+        o = { id: uid(), type: 'image', upl: u.id, name: u.name, aspect, widthMm, ...freeSpot(A) };
+        cur().objects.push(o);
+      }
+      placeObject(o, { select: true });
+      syncPanel(true);
+      afterChange(true);
+      pruneUploads();
+      toast(IMG_OPT && IMG_OPT.price ? `הקובץ נוסף · ${IMG_OPT.price} נוספו להזמנה` : 'הקובץ נוסף');
     }
 
     function deleteActive() {
@@ -1840,7 +2009,7 @@
       for (const s of SURFACES) {
         let texts = 0;
         for (const o of state.surfaces[s.key].objects) {
-          if (o.type === 'symbol') { total++; continue; }
+          if (o.type === 'symbol' || o.type === 'image') { total++; continue; }
           if (!o.text.trim()) continue;
           total++; texts++;
           const lay = layoutFor(o);
@@ -1867,7 +2036,7 @@
 
     function surfaceHasContent(s) {
       return state.surfaces[s.key].objects.some(o =>
-        (o.type === 'text' && String(o.text || '').trim()) || o.type === 'symbol');
+        (o.type === 'text' && String(o.text || '').trim()) || o.type === 'symbol' || o.type === 'image');
     }
 
     function syncToPage() {
@@ -1884,6 +2053,17 @@
       for (const s of SURFACES) {
         if (s.gate) bridge.setSideOption(s.gate.nameIncludes, s.gate.yesIncludes, surfaceHasContent(s));
       }
+      // Customer image -> the paid "attach image/logo" option. Only touched once
+      // the editor placed an image, so a customer who picks that option on the
+      // site by hand (to upload at checkout) is left alone.
+      const hasImg = imageObjs().length > 0;
+      if (IMG_OPT && (hasImg || imgOptTouched)) {
+        bridge.setSideOption(IMG_OPT.name, IMG_OPT.yes, hasImg);
+        imgOptTouched = hasImg;
+      }
+      E.saveNote.textContent = hasImg
+        ? 'בלחיצה על הכפתור אני מאשר/ת את הטקסט, הגופן והמיקום. הלוגו / התמונה שהעליתי יעברו לבדיקת המעצב שלנו, שיכין אותם לחריטה ויאשר איתי לפני הביצוע.'
+        : 'בלחיצה על הכפתור אני מאשר/ת שזהו העיצוב הסופי לחריטה — הטקסט, האיות, הגופן והמיקום נכונים, והוא ייחרט בדיוק כפי שהוא נראה כאן, ללא סקיצה נוספת לאישור.';
     }
     let syncTimer = null;
     const scheduleSync = () => { clearTimeout(syncTimer); syncTimer = setTimeout(syncToPage, 400); };
@@ -1953,6 +2133,7 @@
           for (const o of objs) {
             if (o.type === 'text' && (typeof o.text !== 'string' || !FONTS.some(f => f.id === o.font))) return null;
             if (o.type === 'symbol' && !SYMBOLS.some(x => x.id === o.symbol)) return null;
+            if (o.type === 'image' && (typeof o.upl !== 'string' || !(o.widthMm > 0) || !(o.aspect > 0))) return null;
           }
         }
         if (!SURFACES.some(s => s.key === d.current)) d.current = SURFACES[0].key;
@@ -1998,7 +2179,7 @@
       return [...r].map(n => abc[n % abc.length]).join('');
     }
 
-    function previewBlob(s, polys) {
+    function previewBlob(s, polys, objs) {
       const img = s.img.el;
       const c = document.createElement('canvas');
       c.width = s.img.w; c.height = s.img.h;
@@ -2010,13 +2191,21 @@
       g.globalAlpha = s.engrave.opacity;
       g.fillStyle = s.engrave.color;
       if (polys.length) g.fill(new Path2D(EE.polysToPathD(polys, 3)), 'evenodd');
+      for (const o of (objs || [])) {
+        const u = o.type === 'image' && UPLOADS.get(o.upl);
+        if (!u) continue;
+        const w = o.widthMm, h = o.widthMm * o.aspect;
+        g.drawImage(inkCanvas(u, s.engrave.color), o.cx - w / 2, o.cy - h / 2, w, h);
+      }
       return new Promise(res => c.toBlob(res, 'image/jpeg', 0.88));
     }
 
+    // Engraving geometry (text + built-in symbols). A customer image has no
+    // vectors yet (stage 1) — it is in `objs` for the preview/JSON only.
     function surfacePolys(s) {
       const objs = state.surfaces[s.key].objects.filter(o => o.type !== 'text' || o.text.trim());
       const all = [];
-      for (const o of objs) all.push(...EE.translate(layoutFor(o).polys, o.cx, o.cy));
+      for (const o of objs) if (o.type !== 'image') all.push(...EE.translate(layoutFor(o).polys, o.cx, o.cy));
       return { objs, polys: EE.union(all, 'nonzero') };
     }
 
@@ -2031,14 +2220,25 @@
         const area = { w: s.areaMm.w, h: s.areaMm.h, shape: s.area.shape };
         files.push({ name: `${id}_${s.fileLabel}.dxf`, data: EE.toDXF(polys, area, { origin, guide }) });
         files.push({ name: `${id}_${s.fileLabel}.svg`, data: EE.toSVG(polys, area, { guide }) });
-        files.push({ name: `${id}_${s.fileLabel}_preview.jpg`, data: await previewBlob(s, polys) });
+        files.push({ name: `${id}_${s.fileLabel}_preview.jpg`, data: await previewBlob(s, polys, objs) });
+        const imgFiles = {};
+        for (const o of objs) {
+          const u = o.type === 'image' && UPLOADS.get(o.upl);
+          if (!u || imgFiles[o.id]) continue;
+          const ext = /png/.test(u.type) ? 'png' : 'jpg';
+          imgFiles[o.id] = `${id}_${s.fileLabel}_logo.${ext}`;
+          files.push({ name: imgFiles[o.id], data: u.blob });
+        }
         design.surfaces.push({
           key: s.key, fileLabel: s.fileLabel, areaMm: s.areaMm,
           objects: objs.map(o => o.type === 'text'
             ? { type: 'text', text: o.text, font: o.font, fontLabel: fontLabel(o.font), sizeMm: o.sizeMm, align: o.align, lineSpacing: o.lineSpacing, cxMm: round2(o.cx), cyMm: round2(o.cy) }
-            : { type: 'symbol', symbol: o.symbol, symbolLabel: symLabel(o.symbol), widthMm: o.widthMm, cxMm: round2(o.cx), cyMm: round2(o.cy) }),
+            : o.type === 'image'
+              ? { type: 'image', file: imgFiles[o.id] || null, originalName: o.name || '', widthMm: round2(o.widthMm), heightMm: round2(o.widthMm * o.aspect), cxMm: round2(o.cx), cyMm: round2(o.cy), note: 'קובץ של הלקוח — להכנה ידנית ואישור מול הלקוח' }
+              : { type: 'symbol', symbol: o.symbol, symbolLabel: symLabel(o.symbol), widthMm: o.widthMm, cxMm: round2(o.cx), cyMm: round2(o.cy) }),
         });
       }
+      design.customerImage = imageObjs().length > 0;
       files.push({ name: `${id}_design.json`, data: JSON.stringify(design, null, 2) });
       return files;
     }
@@ -2083,8 +2283,11 @@
       setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
     }
 
-    const designFieldText = (id, res) => `עוצב ע״י הלקוח - אין צורך בסקיצה · קוד ${id}`
-      + (res && res.view ? ` · ${res.view}` : '')
+    // With a customer image the designer must check it, so the order says so first.
+    // The order field holds ~100 characters: the link already carries the code,
+    // so the code is written separately only when there is no link.
+    const designFieldText = (id, res) => (imageObjs().length ? '⚠ כולל לוגו/תמונה של הלקוח – לבדיקת מעצב' : 'עוצב ע״י הלקוח - אין צורך בסקיצה')
+      + ` · ${designMeta(id, res).view}`
       + (test ? ' · בדיקה' : '');
     const designMeta = (id, res) => ({ code: id, view: (res && res.view) || `${API_BASE}/d/${id}` });
 
@@ -2252,6 +2455,15 @@
       E.btnEditTxt.addEventListener('click', () => startEdit(activeModel()));
       E.tDelete.addEventListener('click', deleteActive);
       E.sDelete.addEventListener('click', deleteActive);
+      // customer image (only when the product sells the "attach image/logo" upgrade)
+      if (IMG_OPT) {
+        E.btnAddImg.hidden = false;
+        E.btnAddImg.textContent = '+ לוגו / תמונה' + (IMG_OPT.price ? ` (${IMG_OPT.price})` : '');
+        E.btnAddImg.addEventListener('click', () => { replaceObj = null; E.imgFile.value = ''; E.imgFile.click(); });
+        E.iReplace.addEventListener('click', () => { replaceObj = activeModel(); E.imgFile.value = ''; E.imgFile.click(); });
+        E.iDelete.addEventListener('click', deleteActive);
+        E.imgFile.addEventListener('change', () => addImageFile(E.imgFile.files && E.imgFile.files[0]));
+      }
       E.btnSave.addEventListener('click', save);
       E.btnForMe.addEventListener('click', () => ctx.onClose());
       if (E.btnReset) E.btnReset.addEventListener('click', () => {
@@ -2278,6 +2490,14 @@
         savedId = draft.savedId || null;
       } else {
         state.surfaces = initialDesign();
+      }
+      // customer images of a draft come back from the browser's copy; one that
+      // can't be restored is dropped (the customer can upload it again)
+      for (const s of SURFACES) {
+        const objs = state.surfaces[s.key].objects;
+        for (const o of objs.filter(x => x.type === 'image')) {
+          if (!(await restoreUpload(o.upl))) state.surfaces[s.key].objects = state.surfaces[s.key].objects.filter(x => x !== o);
+        }
       }
       const used = new Set([DEFAULT_FONT, lastFont]);
       for (const o of allObjects()) if (o.type === 'text') used.add(o.font);
@@ -2309,6 +2529,9 @@
         clearTimeout(syncTimer);
         syncToPage();
         bridge.setDesignField('');
+        // "עצבו בשבילי": the image placed here won't reach the order, so drop the
+        // paid option we picked (it comes back if they return to the editor)
+        if (IMG_OPT && imgOptTouched) { bridge.setSideOption(IMG_OPT.name, IMG_OPT.yes, false); imgOptTouched = false; }
         for (const s of SURFACES) bridge.updateDanWrap(s.danWrap, linesOf(s));
         pushHistory();
       },
