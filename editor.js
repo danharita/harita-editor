@@ -1,4 +1,4 @@
-/* Dan Harita design editor 202610192056 */
+/* Dan Harita design editor 202610192111 */
 /*
  * EngraveEngine — turns text and symbols into engraving outlines (mm),
  * and writes DXF (R12) and SVG. The same outlines drive the on-screen
@@ -483,7 +483,9 @@
    * DXF R12, millimetres. Each outline is a closed POLYLINE on layer ENGRAVE.
    * opt.origin: 'center' (0,0 = centre of the area) or 'corner'
    * (0,0 = bottom-left corner of the area). opt.guide adds the area outline
-   * on layer GUIDE (hide it before engraving).
+   * on layer GUIDE (hide it before engraving). opt.marks: [{x0,y0,x1,y1}] in
+   * area mm — frames on layer LOGO marking where a customer image goes (the
+   * designer places the prepared logo there; not for engraving).
    */
   function toDXF(polys, area, opt) {
     const o = opt || {};
@@ -494,7 +496,8 @@
     const w = (code, val) => { L.push(String(code)); L.push(String(val)); };
     const f = v => (Math.abs(v) < 5e-5 ? 0 : v).toFixed(4);
 
-    const all = polys.slice();
+    const marks = (o.marks || []).map(m => [[m.x0, m.y0], [m.x1, m.y0], [m.x1, m.y1], [m.x0, m.y1]]);
+    const all = polys.slice().concat(marks);
     if (o.guide) all.push(areaOutline(area));
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
     for (const p of all) for (const [x, y] of p) {
@@ -515,9 +518,10 @@
     w(0, 'TABLE'); w(2, 'LTYPE'); w(70, 1);
     w(0, 'LTYPE'); w(2, 'CONTINUOUS'); w(70, 0); w(3, 'Solid line'); w(72, 65); w(73, 0); w(40, f(0));
     w(0, 'ENDTAB');
-    w(0, 'TABLE'); w(2, 'LAYER'); w(70, o.guide ? 2 : 1);
+    w(0, 'TABLE'); w(2, 'LAYER'); w(70, 1 + (o.guide ? 1 : 0) + (marks.length ? 1 : 0));
     w(0, 'LAYER'); w(2, 'ENGRAVE'); w(70, 0); w(62, 7); w(6, 'CONTINUOUS');
     if (o.guide) { w(0, 'LAYER'); w(2, 'GUIDE'); w(70, 0); w(62, 1); w(6, 'CONTINUOUS'); }
+    if (marks.length) { w(0, 'LAYER'); w(2, 'LOGO'); w(70, 0); w(62, 5); w(6, 'CONTINUOUS'); }
     w(0, 'ENDTAB');
     w(0, 'ENDSEC');
 
@@ -533,6 +537,7 @@
     w(0, 'SECTION'); w(2, 'ENTITIES');
     for (const p of polys) poly(p, 'ENGRAVE', 7);
     if (o.guide) poly(areaOutline(area), 'GUIDE', 1);
+    for (const m of marks) poly(m, 'LOGO', 5);
     w(0, 'ENDSEC');
     w(0, 'EOF');
     return L.join('\r\n') + '\r\n';
@@ -548,6 +553,9 @@
         ? `<ellipse cx="${area.w / 2}" cy="${area.h / 2}" rx="${area.w / 2}" ry="${area.h / 2}"/>`
         : `<rect x="0" y="0" width="${area.w}" height="${area.h}"/>`;
       guide = `\n  <g id="GUIDE" fill="none" stroke="#ff0000" stroke-width="0.1">${guide}</g>`;
+    }
+    if ((o.marks || []).length) {
+      guide += `\n  <g id="LOGO" fill="none" stroke="#0050ff" stroke-width="0.2" stroke-dasharray="1 0.6">${o.marks.map(m => `<rect x="${(+m.x0).toFixed(3)}" y="${(+m.y0).toFixed(3)}" width="${(m.x1 - m.x0).toFixed(3)}" height="${(m.y1 - m.y0).toFixed(3)}"/>`).join('')}</g>`;
     }
     return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${area.w}mm" height="${area.h}mm" viewBox="0 0 ${area.w} ${area.h}">
@@ -604,7 +612,7 @@
   const EE = window.EngraveEngine;
   const SYMBOLS = window.DEMO_SYMBOLS;
   const CSS_TEXT = '.dhe { --ground: #f6f4f0; --surface: #ffffff; --surface-2: #f7f5f1; --ink: #1d1a16; --muted: #6b645a; --line: #e0dbd2; --accent: #8f6f33; --accent-ink: #ffffff; --accent-soft: #f2eadb; --brand: #c8a96e; --danger: #b3261e; --danger-soft: #fbeae8; --stage: #e7e3dc; --focus: #2f6fd6; --ok: #1e7b3a; direction: rtl; text-align: right; color: var(--ink); font-family: inherit; font-size: 16px; line-height: 1.4; display: grid; gap: 12px; margin: 12px 0 20px; padding: 12px; background: var(--ground); border: 1px solid var(--line); border-radius: 14px; box-sizing: border-box; width: 100%; max-width: 760px; } .dhe *, .dhe *::before, .dhe *::after { box-sizing: border-box; } .dhe [hidden] { display: none !important; } .dhe button, .dhe textarea, .dhe input, .dhe output { font-family: inherit; color: inherit; margin: 0; text-transform: none; letter-spacing: normal; box-shadow: none; background-image: none; float: none; text-shadow: none; } .dhe button { cursor: pointer; line-height: 1.2; -webkit-tap-highlight-color: transparent; } .dhe :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; } .dhe p { margin: 0; } .dhe h2 { margin: 0; font-size: 13px; font-weight: 700; letter-spacing: .02em; color: var(--muted); line-height: 1.3; } .dhe .dhe-btn { min-height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); font-weight: 600; font-size: 16px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: auto; height: auto; } .dhe .dhe-btn:hover { border-color: var(--accent); } .dhe .dhe-btn:disabled { opacity: .45; cursor: default; border-color: var(--line); } .dhe .dhe-btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); } .dhe .dhe-btn.primary:hover { filter: brightness(1.06); } .dhe .dhe-btn.danger { color: var(--danger); } .dhe .dhe-btn.icon { width: 44px; padding: 0; } .dhe .dhe-btn svg { width: 20px; height: 20px; } .dhe .dhe-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; } .dhe .dhe-bar .grow { flex: 1; min-width: 0; } .dhe .dhe-save { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); } .dhe .dhe-save .dhe-save-btn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 62px; padding: 16px 20px; font-size: 18px; font-weight: 800; border-radius: 14px; box-shadow: 0 4px 16px rgba(143,111,51,.30); } .dhe .dhe-save .dhe-save-btn svg { width: 24px; height: 24px; flex: 0 0 auto; } .dhe .dhe-save-note { margin: 11px 4px 0; font-size: 13px; line-height: 1.45; color: var(--muted); text-align: center; } .dhe .dhe-status { font-size: 14px; color: var(--muted); font-weight: 600; margin-top: 8px; text-align: center; } .dhe .dhe-status.ok { color: var(--ok); } .dhe .dhe-status.dirty { color: var(--accent); } .dhe .dhe-test { font-size: 12px; font-weight: 700; color: var(--accent); background: var(--accent-soft); border-radius: 999px; padding: 2px 9px; } .dhe .dhe-tabs { display: inline-flex; background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 3px; gap: 3px; justify-self: start; } .dhe .dhe-tabs button { min-height: 38px; padding: 0 16px; border: 0; border-radius: 9px; background: transparent; font-weight: 600; font-size: 15px; color: var(--muted); } .dhe .dhe-tabs button[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.12); } .dhe .dhe-tabs .count { font-weight: 400; color: var(--muted); } .dhe .dhe-stage-wrap { display: grid; gap: 6px; justify-items: center; } .dhe .dhe-stage { position: relative; width: 100%; background: var(--stage); border-radius: 12px; overflow: hidden; } .dhe .dhe-stage img.dhe-bg { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; display: block; margin: 0; user-select: none; -webkit-user-drag: none; pointer-events: none; border: 0; } .dhe .dhe-stage .canvas-container { position: absolute !important; inset: 0; } .dhe .dhe-stage canvas { max-width: none !important; max-height: none !important; } .dhe .dhe-loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font-weight: 600; background: var(--stage); text-align: center; padding: 16px; z-index: 2; } .dhe .dhe-readout { width: 100%; display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; font-size: 13px; color: var(--muted); min-height: 18px; } .dhe .dhe-readout strong { color: var(--ink); font-weight: 600; } .dhe .dhe-quick { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 6px; } .dhe .dhe-size { display: inline-flex; align-items: stretch; border: 2px solid var(--accent); border-radius: 12px; overflow: hidden; background: var(--surface); box-shadow: 0 1px 3px rgba(0,0,0,.12); } .dhe .dhe-size button { width: 60px; min-height: 52px; border: 0; background: var(--accent-soft); color: var(--accent); font-size: 30px; font-weight: 700; line-height: 1; padding: 0; touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; } .dhe .dhe-size button:active { background: var(--accent); color: var(--accent-ink); } .dhe .dhe-size-label { display: inline-flex; align-items: center; justify-content: center; min-width: 96px; padding: 0 14px; font-size: 18px; font-weight: 700; color: var(--ink); } .dhe .dhe-fine { color: var(--muted); font-size: 13px; } .dhe .dhe-toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; } .dhe .dhe-toolbar .grow { flex: 1; } .dhe .dhe-panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: grid; gap: 12px; } .dhe .dhe-hint { color: var(--muted); font-size: 15px; } .dhe .dhe-edit { position: absolute; top: 6px; left: 6px; right: 6px; z-index: 6; display: flex; gap: 6px; align-items: flex-start; } .dhe .dhe-edit textarea { flex: 1; min-width: 0; min-height: 46px; box-sizing: border-box; border: 2px solid var(--accent); border-radius: 10px; background: rgba(255, 255, 255, 0.95); color: #1d1a16; padding: 9px 12px; font-size: 18px; line-height: 1.35; resize: none; overflow: auto; unicode-bidi: plaintext; text-align: center; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22); } .dhe .dhe-edit textarea:focus { outline: none; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22), 0 0 0 3px var(--accent-soft); } .dhe .dhe-edit textarea::placeholder { color: #8d857a; } .dhe .dhe-edit button { width: 46px; min-height: 46px; border: 0; border-radius: 10px; background: var(--accent); color: var(--accent-ink); font-size: 20px; font-weight: 700; padding: 0; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22); } .dhe .dhe-fonts { display: grid; gap: 8px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; -webkit-overflow-scrolling: touch; } .dhe .dhe-fonts::-webkit-scrollbar { display: none; } .dhe .dhe-fonts.dhe-dragging { cursor: grabbing; } .dhe .dhe-fonts.dhe-dragging .dhe-chip { pointer-events: none; } /* gentle, always-visible scrollbar under the fonts (shows there are more) */ .dhe .dhe-fontscroll { position: relative; height: 4px; border-radius: 999px; background: var(--accent-soft); margin: 6px 6px 0; } .dhe .dhe-fontscroll-thumb { position: absolute; top: 0; height: 100%; min-width: 20%; border-radius: 999px; background: var(--accent); opacity: .5; cursor: grab; touch-action: none; } .dhe .dhe-fontscroll-thumb:active { cursor: grabbing; opacity: .75; } .dhe .dhe-font-row { display: flex; gap: 8px; width: max-content; } .dhe .dhe-chip { flex: 0 0 96px; min-height: 52px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); padding: 5px 8px; display: grid; gap: 1px; text-align: center; cursor: pointer; } .dhe .dhe-chip .sample { font-size: 18px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; unicode-bidi: plaintext; } .dhe .dhe-chip .name { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .dhe .dhe-chip[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); box-shadow: inset 0 0 0 1px var(--accent); } .dhe .dhe-chip.warn .name { color: var(--danger); } .dhe .dhe-chip.loading { opacity: .55; } .dhe .dhe-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; } .dhe .dhe-stepper { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--surface); } .dhe .dhe-stepper button { width: 44px; min-height: 42px; border: 0; background: var(--surface-2); font-size: 20px; font-weight: 700; padding: 0; touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; } .dhe .dhe-stepper button:active { background: var(--accent-soft); } .dhe .dhe-stepper output { min-width: 128px; text-align: center; font-size: 14px; padding: 0 6px; } .dhe .dhe-seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; } .dhe .dhe-seg button { min-height: 42px; padding: 0 12px; border: 0; background: var(--surface-2); font-weight: 600; font-size: 14px; } .dhe .dhe-seg button + button { border-inline-start: 1px solid var(--line); } .dhe .dhe-seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); } .dhe .dhe-symbols { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; } .dhe .dhe-sym { border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); padding: 10px 6px 6px; display: grid; gap: 4px; justify-items: center; font-size: 13px; color: var(--muted); } .dhe .dhe-sym svg { width: 44px; height: 38px; color: var(--ink); } .dhe .dhe-sym:hover { border-color: var(--accent); } .dhe .dhe-nudge { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; } .dhe .dhe-nudge-label { font-size: 13px; font-weight: 600; color: var(--muted); margin-inline-end: 4px; } .dhe .dhe-nudge button { width: 44px; height: 44px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); display: inline-grid; place-items: center; padding: 0; touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; } .dhe .dhe-nudge button.wide { width: auto; padding: 0 14px; font-weight: 600; font-size: 14px; } .dhe .dhe-nudge button svg { width: 20px; height: 20px; } .dhe .dhe-nudge button:active { background: var(--accent-soft); border-color: var(--accent); } .dhe .dhe-issues { padding: 10px 14px; background: var(--danger-soft); color: var(--danger); border-radius: 10px; display: grid; gap: 4px; font-size: 14px; font-weight: 600; } .dhe details.dhe-settings { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 0 14px; } .dhe details.dhe-settings summary { min-height: 44px; display: flex; align-items: center; font-weight: 600; cursor: pointer; font-size: 15px; } .dhe details.dhe-settings .body { display: grid; gap: 10px; padding-bottom: 14px; font-size: 15px; } .dhe details.dhe-settings label { display: flex; gap: 8px; align-items: center; font-weight: 400; margin: 0; } .dhe details.dhe-settings input { width: 18px; height: 18px; accent-color: var(--accent); } .dhe .dhe-toast { position: fixed; left: 16px; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); margin: 0 auto; max-width: 520px; background: var(--ink); color: #fff; border-radius: 12px; padding: 12px 16px; font-weight: 600; font-size: 15px; box-shadow: 0 6px 24px rgba(0,0,0,.25); transition: opacity .2s, transform .2s; z-index: 2147483000; opacity: 0; transform: translateY(8px); pointer-events: none; text-align: center; } .dhe .dhe-toast.show { opacity: 1; transform: none; } @media (prefers-reduced-motion: reduce) { .dhe .dhe-toast { transition: none; } } @media (max-width: 420px) { .dhe { padding: 10px; } .dhe .dhe-stepper output { min-width: 108px; } .dhe .dhe-bar .dhe-btn { padding: 0 12px; } } ';
-  const VERSION = '202610192056';
+  const VERSION = '202610192111';
 
   // ------------------------------------------------------------------ config
 
@@ -955,7 +963,7 @@
             const yes = (paid.textContent || '').replace(/\s+/g, ' ').trim();
             const price = (yes.match(/₪\s?[\d,]+|[\d,]+\s?₪/) || [''])[0].replace(/\s/g, '');
             // match the choice by its price — the site's text has odd spacing
-            return { name: el.getAttribute('property_name'), yes: price || yes, label: yes, price };
+            return { name: el.getAttribute('property_name'), yes: price || yes, label: yes, price, el };
           }
         }
         return null;
@@ -1013,6 +1021,10 @@
           return n.indexOf('טקסט לחריטה') === 0 && !mine.has(n) && rowOf(i) && rowOf(i).style.display !== 'none';
         });
         if (!stray) { hide(fontRow); hide(symRow); }
+        // the "attach image/logo" choice is made by the editor's own button
+        // (it keeps selecting it in the background); back on "עצבו בשבילי"
+        const io = this.imageOption();
+        if (io) hide(rowOf(io.el));
       },
       exit() {
         while (hidden.length) { const h = hidden.pop(); h.el.style.display = h.display; }
@@ -2218,8 +2230,13 @@
         const { objs, polys } = surfacePolys(s);
         if (!objs.length) continue;
         const area = { w: s.areaMm.w, h: s.areaMm.h, shape: s.area.shape };
-        files.push({ name: `${id}_${s.fileLabel}.dxf`, data: EE.toDXF(polys, area, { origin, guide }) });
-        files.push({ name: `${id}_${s.fileLabel}.svg`, data: EE.toSVG(polys, area, { guide }) });
+        // where the customer's image goes: a frame on its own LOGO layer
+        const marks = objs.filter(o => o.type === 'image').map(o => {
+          const w = o.widthMm, h = o.widthMm * o.aspect;
+          return { x0: o.cx - w / 2, y0: o.cy - h / 2, x1: o.cx + w / 2, y1: o.cy + h / 2 };
+        });
+        files.push({ name: `${id}_${s.fileLabel}.dxf`, data: EE.toDXF(polys, area, { origin, guide, marks }) });
+        files.push({ name: `${id}_${s.fileLabel}.svg`, data: EE.toSVG(polys, area, { guide, marks }) });
         files.push({ name: `${id}_${s.fileLabel}_preview.jpg`, data: await previewBlob(s, polys, objs) });
         const imgFiles = {};
         for (const o of objs) {

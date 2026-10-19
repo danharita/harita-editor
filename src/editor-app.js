@@ -361,7 +361,7 @@
             const yes = (paid.textContent || '').replace(/\s+/g, ' ').trim();
             const price = (yes.match(/₪\s?[\d,]+|[\d,]+\s?₪/) || [''])[0].replace(/\s/g, '');
             // match the choice by its price — the site's text has odd spacing
-            return { name: el.getAttribute('property_name'), yes: price || yes, label: yes, price };
+            return { name: el.getAttribute('property_name'), yes: price || yes, label: yes, price, el };
           }
         }
         return null;
@@ -419,6 +419,10 @@
           return n.indexOf('טקסט לחריטה') === 0 && !mine.has(n) && rowOf(i) && rowOf(i).style.display !== 'none';
         });
         if (!stray) { hide(fontRow); hide(symRow); }
+        // the "attach image/logo" choice is made by the editor's own button
+        // (it keeps selecting it in the background); back on "עצבו בשבילי"
+        const io = this.imageOption();
+        if (io) hide(rowOf(io.el));
       },
       exit() {
         while (hidden.length) { const h = hidden.pop(); h.el.style.display = h.display; }
@@ -1624,8 +1628,13 @@
         const { objs, polys } = surfacePolys(s);
         if (!objs.length) continue;
         const area = { w: s.areaMm.w, h: s.areaMm.h, shape: s.area.shape };
-        files.push({ name: `${id}_${s.fileLabel}.dxf`, data: EE.toDXF(polys, area, { origin, guide }) });
-        files.push({ name: `${id}_${s.fileLabel}.svg`, data: EE.toSVG(polys, area, { guide }) });
+        // where the customer's image goes: a frame on its own LOGO layer
+        const marks = objs.filter(o => o.type === 'image').map(o => {
+          const w = o.widthMm, h = o.widthMm * o.aspect;
+          return { x0: o.cx - w / 2, y0: o.cy - h / 2, x1: o.cx + w / 2, y1: o.cy + h / 2 };
+        });
+        files.push({ name: `${id}_${s.fileLabel}.dxf`, data: EE.toDXF(polys, area, { origin, guide, marks }) });
+        files.push({ name: `${id}_${s.fileLabel}.svg`, data: EE.toSVG(polys, area, { guide, marks }) });
         files.push({ name: `${id}_${s.fileLabel}_preview.jpg`, data: await previewBlob(s, polys, objs) });
         const imgFiles = {};
         for (const o of objs) {

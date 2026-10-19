@@ -482,7 +482,9 @@
    * DXF R12, millimetres. Each outline is a closed POLYLINE on layer ENGRAVE.
    * opt.origin: 'center' (0,0 = centre of the area) or 'corner'
    * (0,0 = bottom-left corner of the area). opt.guide adds the area outline
-   * on layer GUIDE (hide it before engraving).
+   * on layer GUIDE (hide it before engraving). opt.marks: [{x0,y0,x1,y1}] in
+   * area mm — frames on layer LOGO marking where a customer image goes (the
+   * designer places the prepared logo there; not for engraving).
    */
   function toDXF(polys, area, opt) {
     const o = opt || {};
@@ -493,7 +495,8 @@
     const w = (code, val) => { L.push(String(code)); L.push(String(val)); };
     const f = v => (Math.abs(v) < 5e-5 ? 0 : v).toFixed(4);
 
-    const all = polys.slice();
+    const marks = (o.marks || []).map(m => [[m.x0, m.y0], [m.x1, m.y0], [m.x1, m.y1], [m.x0, m.y1]]);
+    const all = polys.slice().concat(marks);
     if (o.guide) all.push(areaOutline(area));
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
     for (const p of all) for (const [x, y] of p) {
@@ -514,9 +517,10 @@
     w(0, 'TABLE'); w(2, 'LTYPE'); w(70, 1);
     w(0, 'LTYPE'); w(2, 'CONTINUOUS'); w(70, 0); w(3, 'Solid line'); w(72, 65); w(73, 0); w(40, f(0));
     w(0, 'ENDTAB');
-    w(0, 'TABLE'); w(2, 'LAYER'); w(70, o.guide ? 2 : 1);
+    w(0, 'TABLE'); w(2, 'LAYER'); w(70, 1 + (o.guide ? 1 : 0) + (marks.length ? 1 : 0));
     w(0, 'LAYER'); w(2, 'ENGRAVE'); w(70, 0); w(62, 7); w(6, 'CONTINUOUS');
     if (o.guide) { w(0, 'LAYER'); w(2, 'GUIDE'); w(70, 0); w(62, 1); w(6, 'CONTINUOUS'); }
+    if (marks.length) { w(0, 'LAYER'); w(2, 'LOGO'); w(70, 0); w(62, 5); w(6, 'CONTINUOUS'); }
     w(0, 'ENDTAB');
     w(0, 'ENDSEC');
 
@@ -532,6 +536,7 @@
     w(0, 'SECTION'); w(2, 'ENTITIES');
     for (const p of polys) poly(p, 'ENGRAVE', 7);
     if (o.guide) poly(areaOutline(area), 'GUIDE', 1);
+    for (const m of marks) poly(m, 'LOGO', 5);
     w(0, 'ENDSEC');
     w(0, 'EOF');
     return L.join('\r\n') + '\r\n';
@@ -547,6 +552,9 @@
         ? `<ellipse cx="${area.w / 2}" cy="${area.h / 2}" rx="${area.w / 2}" ry="${area.h / 2}"/>`
         : `<rect x="0" y="0" width="${area.w}" height="${area.h}"/>`;
       guide = `\n  <g id="GUIDE" fill="none" stroke="#ff0000" stroke-width="0.1">${guide}</g>`;
+    }
+    if ((o.marks || []).length) {
+      guide += `\n  <g id="LOGO" fill="none" stroke="#0050ff" stroke-width="0.2" stroke-dasharray="1 0.6">${o.marks.map(m => `<rect x="${(+m.x0).toFixed(3)}" y="${(+m.y0).toFixed(3)}" width="${(m.x1 - m.x0).toFixed(3)}" height="${(m.y1 - m.y0).toFixed(3)}"/>`).join('')}</g>`;
     }
     return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${area.w}mm" height="${area.h}mm" viewBox="0 0 ${area.w} ${area.h}">
