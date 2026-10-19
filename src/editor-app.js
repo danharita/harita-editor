@@ -162,9 +162,13 @@
   const cssEsc = s => (window.CSS && CSS.escape) ? CSS.escape(s) : String(s).replace(/["\\]/g, '\\$&');
 
   // "test-1" -> { base:'test', index:1 }. No trailing number means index 1.
+  // A bare number ("engrave-bg-1" -> key "1") and the short "BG"/"BG2" tags
+  // (keys "bg"/"bg-2") share one base, so the two naming styles can be mixed.
   function parseKey(key) {
-    const m = /^(.*?)-(\d+)$/.exec(key);
-    return m ? { base: m[1], index: parseInt(m[2], 10) } : { base: key, index: 1 };
+    const m = /^(.*?)-?(\d+)$/.exec(key);
+    const r = m ? { base: m[1], index: parseInt(m[2], 10) } : { base: key, index: 1 };
+    if (r.base === '') r.base = 'bg';
+    return r;
   }
 
   // A centred box at the surface's mm ratio, ~80% of the image.
@@ -1772,17 +1776,21 @@
     // Group the images by base name and pick the product on the page (the
     // base with the most images — normally the only one). Within it, order
     // by the trailing number, so engrave-bg-<base>-1 is the first surface.
-    const parsed = (ctx.bgs || []).map(b => Object.assign(parseKey(b.key), { url: b.url, key: b.key }));
+    const parsed = (ctx.bgs || []).map((b, i) => Object.assign(parseKey(b.key), { url: b.url, key: b.key, pos: i }));
     const byBase = {};
     for (const p of parsed) (byBase[p.base] = byBase[p.base] || []).push(p);
     const base = Object.keys(byBase).sort((a, b) => byBase[b].length - byBase[a].length)[0];
-    const imgs = base ? byBase[base].sort((a, b) => a.index - b.index) : [];
+    const byIndex = (a, b) => (a.index - b.index) || (a.pos - b.pos);
+    let imgs = base ? byBase[base].slice().sort(byIndex) : [];
     // Config priority: the server (calibration tool, keyed by product id) wins,
     // then the built-in id map, then the image-base map. So a product can be
     // (re)calibrated without a code change.
     let entries = null;
     const srv = await fetchProductConfig(bridge.productId);
     if (srv && srv.surfaces && srv.surfaces.length) {
+      // Calibrated by product id: the page's background images are this
+      // product's surfaces whatever they are named — take them all, by number.
+      imgs = parsed.slice().sort(byIndex);
       entries = srv.surfaces.map((s, i) => ({ lib: srvSurfaceToLib(s, i), area: s.area }));
     } else {
       let libKeys = PRODUCTS_BY_ID[bridge.productId] || PRODUCTS[base] || (SURFACES_LIB[base] ? [base] : null);
